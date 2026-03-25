@@ -12,10 +12,10 @@ import retrofit2.http.Body
 
 interface PhotoApi {
 
-    @GET("home/api/photos/")
+    @GET("api/media_library/photos/")
     suspend fun getPhotos(): Response<List<Photo>>
 
-    @GET("api/distributors/")
+    @GET("api/media_library/distributors/")
     suspend fun getDistributors(): Response<List<Distributor>>
 
     @POST("home/{photoId}/preview/")

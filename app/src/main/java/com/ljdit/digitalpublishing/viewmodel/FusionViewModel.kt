@@ -31,8 +31,18 @@ class FusionViewModel : ViewModel() {
 
             val response = repository.createFusionPreview(photoId, request)
 
+            println("FUSION CODE: ${response.code()}")
+
             if (response.isSuccessful) {
+
+                println("FUSION OK")
+
                 _preview.value = response.body()
+
+            } else {
+
+                println("FUSION ERROR BODY: ${response.errorBody()?.string()}")
+
             }
 
         }
