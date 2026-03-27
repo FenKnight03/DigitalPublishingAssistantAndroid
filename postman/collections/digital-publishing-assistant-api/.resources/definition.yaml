@@ -1,0 +1,7 @@
+$kind: collection
+name: Digital Publishing Assistant API
+description: 'API collection for the Digital Publishing Assistant web app at https://ljdit.com'
+variables:
+  - key: bearer_token
+    value: ''
+    description: 'Bearer token obtained after mobile login'

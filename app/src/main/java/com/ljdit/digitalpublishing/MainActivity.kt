@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing
 
+import RootScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,7 +24,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             DigitalPublishingAssistantAndroidTheme {
-                AppNavigation()
+                RootScreen()
             }
         }
     }

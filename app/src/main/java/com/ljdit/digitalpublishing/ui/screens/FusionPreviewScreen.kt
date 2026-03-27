@@ -2,6 +2,7 @@ package com.ljdit.digitalpublishing.ui.screens
 
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -44,7 +45,12 @@ fun FusionPreviewScreen(
 
         preview?.let {
 
-            val imageBytes = Base64.decode(it.image, Base64.DEFAULT)
+            Log.d("FusionUI", "Preview recibido: $it")
+
+            val base64 = it.data.image
+            Log.d("FusionUI", "Base64 length: ${base64.length}")
+
+            val imageBytes = Base64.decode(base64, Base64.DEFAULT)
 
             val bitmap = BitmapFactory.decodeByteArray(
                 imageBytes,
@@ -52,12 +58,16 @@ fun FusionPreviewScreen(
                 imageBytes.size
             )
 
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Fusion preview"
-            )
+            if (bitmap == null) {
+                Text("Error al decodificar imagen")
+            } else {
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Fusion preview"
+                )
+            }
 
-        }
+        } ?: Text("Cargando, Sin preview aún, si se tarda mucho probablemente error")
 
     }
 }

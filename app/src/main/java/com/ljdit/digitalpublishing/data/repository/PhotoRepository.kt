@@ -6,12 +6,12 @@ import com.ljdit.digitalpublishing.model.FusionPreviewRequest
 class PhotoRepository {
 
     suspend fun getPhotos() =
-        RetrofitClient.api.getPhotos()
+        RetrofitClient.photoApi.getPhotos()
 
     suspend fun createFusionPreview(
         photoId: Int,
         request: FusionPreviewRequest
     ) =
-        RetrofitClient.api.createFusionPreview(photoId, request)
+        RetrofitClient.photoApi.createFusionPreview(photoId, request)
 
 }

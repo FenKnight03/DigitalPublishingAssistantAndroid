@@ -1,0 +1,104 @@
+$kind: http-request
+name: Mobile Login
+method: POST
+url: 'https://ljdit.com/api/accounts/mobile/'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "demo_user",
+      "password": "demo_password"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      // Test 1: Response time is acceptable
+      pm.test("Response time is less than 5000ms", function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+
+      // Test 2: Response has a JSON body
+      pm.test("Response is JSON", function () {
+          pm.response.to.be.json;
+      });
+
+      // Test 3: Response has 'ok' field
+      pm.test("Response body has 'ok' field", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property('ok');
+      });
+
+      // Test 4: On success (200), validate structure
+      if (pm.response.code === 200) {
+          pm.test("200 - ok is true", function () {
+              const json = pm.response.json();
+              pm.expect(json.ok).to.be.true;
+          });
+
+          pm.test("200 - data.token exists", function () {
+              const json = pm.response.json();
+              pm.expect(json.data).to.have.property('token');
+              pm.expect(json.data.token).to.be.a('string').and.not.empty;
+          });
+
+          pm.test("200 - data.token_type is Bearer", function () {
+              const json = pm.response.json();
+              pm.expect(json.data.token_type).to.equal('Bearer');
+          });
+
+          pm.test("200 - data.user exists with id and username", function () {
+              const json = pm.response.json();
+              pm.expect(json.data.user).to.have.property('id');
+              pm.expect(json.data.user).to.have.property('username');
+          });
+
+          pm.test("200 - data.profile exists with distribuidor_id", function () {
+              const json = pm.response.json();
+              pm.expect(json.data.profile).to.have.property('distribuidor_id');
+          });
+
+          // Save token for later use
+          const json = pm.response.json();
+          pm.collectionVariables.set("bearer_token", json.data.token);
+      }
+
+      // Test 5: On 400, validate error structure
+      if (pm.response.code === 400) {
+          pm.test("400 - ok is false", function () {
+              const json = pm.response.json();
+              pm.expect(json.ok).to.be.false;
+          });
+          pm.test("400 - error.code is missing_fields or bad_json", function () {
+              const json = pm.response.json();
+              pm.expect(['missing_fields', 'bad_json']).to.include(json.error.code);
+          });
+      }
+
+      // Test 6: On 401, validate error structure
+      if (pm.response.code === 401) {
+          pm.test("401 - ok is false", function () {
+              const json = pm.response.json();
+              pm.expect(json.ok).to.be.false;
+          });
+          pm.test("401 - error.code is invalid_credentials", function () {
+              const json = pm.response.json();
+              pm.expect(json.error.code).to.equal('invalid_credentials');
+          });
+      }
+
+      // Test 7: On 403, validate error structure
+      if (pm.response.code === 403) {
+          pm.test("403 - ok is false", function () {
+              const json = pm.response.json();
+              pm.expect(json.ok).to.be.false;
+          });
+          pm.test("403 - error.code is not_approved or must_change_password", function () {
+              const json = pm.response.json();
+              pm.expect(['not_approved', 'must_change_password']).to.include(json.error.code);
+          });
+      }

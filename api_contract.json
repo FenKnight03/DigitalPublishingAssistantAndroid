@@ -1,0 +1,319 @@
+{
+  "contract_version": "1.0.0",
+  "generated_at": "2026-03-23",
+  "source": {
+    "framework": "Django",
+    "project": "digital_publishing_assistant_django",
+    "notes": "Contrato derivado del codigo fuente actual. Prioriza endpoints bajo /api/ para consumo movil."
+  },
+  "servers": [
+    {
+      "name": "production",
+      "base_url": "https://ljdit.com"
+    }
+  ],
+  "auth": {
+    "session_auth": {
+      "description": "Sesion Django mediante cookie sessionid.",
+      "csrf": "Requerido en POST no exentos de CSRF (ej. /api/accounts/)."
+    },
+    "bearer_auth": {
+      "description": "Token movil propio (no JWT).",
+      "header": "Authorization: Bearer <token>",
+      "issued_by": "/api/accounts/mobile/"
+    }
+  },
+  "endpoints": [
+    {
+      "name": "api_login",
+      "group": "accounts",
+      "method": "POST",
+      "path": "/api/accounts/",
+      "auth_required": false,
+      "csrf_required": true,
+      "content_type": "application/json",
+      "request_body": {
+        "required": true,
+        "schema": {
+          "usuario": "string",
+          "contrasena": "string"
+        },
+        "example": {
+          "usuario": "demo_user",
+          "contrasena": "demo_password"
+        }
+      },
+      "responses": {
+        "200": {
+          "body": {
+            "ok": true,
+            "datos": {
+              "nombre": "demo_user"
+            }
+          }
+        },
+        "400": {
+          "body": {
+            "ok": false,
+            "error": "Ingrese usuario y contraseña."
+          }
+        },
+        "401": {
+          "body": {
+            "ok": false,
+            "error": "Credenciales incorrectas."
+          }
+        },
+        "403": [
+          {
+            "body": {
+              "ok": false,
+              "error": "Tu cuenta esta pendiente de aprobacion por un administrador."
+            }
+          },
+          {
+            "body": {
+              "ok": false,
+              "error": "Debes cambiar tu contrasena temporal para continuar.",
+              "code": "must_change_password",
+              "redirect": "/force-password-change/"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "api_mobile_login",
+      "group": "accounts",
+      "method": "POST",
+      "path": "/api/accounts/mobile/",
+      "auth_required": false,
+      "csrf_required": false,
+      "content_type": "application/json",
+      "request_body": {
+        "required": true,
+        "schema": {
+          "username": "string (alias: usuario)",
+          "password": "string (alias: contrasena)"
+        },
+        "example": {
+          "username": "demo_user",
+          "password": "demo_password"
+        }
+      },
+      "responses": {
+        "200": {
+          "body": {
+            "ok": true,
+            "data": {
+              "token": "string",
+              "token_type": "Bearer",
+              "user": {
+                "id": 1,
+                "username": "demo_user",
+                "is_admin": false
+              },
+              "profile": {
+                "distribuidor_id": 10,
+                "distribuidor_nombre": "Distribuidor Demo"
+              }
+            }
+          }
+        },
+        "400": {
+          "body": {
+            "ok": false,
+            "error": {
+              "code": "missing_fields | bad_json",
+              "message": "Mensaje de validacion"
+            }
+          }
+        },
+        "401": {
+          "body": {
+            "ok": false,
+            "error": {
+              "code": "invalid_credentials",
+              "message": "Credenciales incorrectas."
+            }
+          }
+        },
+        "403": [
+          {
+            "body": {
+              "ok": false,
+              "error": {
+                "code": "not_approved",
+                "message": "Tu cuenta esta pendiente de aprobacion."
+              }
+            }
+          },
+          {
+            "body": {
+              "ok": false,
+              "error": {
+                "code": "must_change_password",
+                "message": "Debes cambiar tu contrasena temporal para continuar."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "api_me",
+      "group": "accounts",
+      "method": "GET",
+      "path": "/api/accounts/me/",
+      "auth_required": true,
+      "auth_type": "bearer",
+      "headers": {
+        "Authorization": "Bearer <token>"
+      },
+      "responses": {
+        "200": {
+          "body": {
+            "ok": true,
+            "data": {
+              "user": {
+                "id": 1,
+                "username": "demo_user",
+                "is_admin": false
+              },
+              "profile": {
+                "distribuidor_id": 10,
+                "distribuidor_nombre": "Distribuidor Demo"
+              }
+            }
+          }
+        },
+        "401": {
+          "body": {
+            "ok": false,
+            "error": {
+              "code": "missing_token | invalid_token",
+              "message": "Falta token Bearer. | Token invalido o expirado."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "photos_list",
+      "group": "media_library",
+      "method": "GET",
+      "path": "/api/media_library/photos/",
+      "auth_required": false,
+      "responses": {
+        "200": {
+          "body": [
+            {
+              "id": 123,
+              "imageUrl": "https://ljdit.com/api/media_library/photo/123/image/"
+            }
+          ]
+        }
+      },
+      "notes": "Devuelve maximo 100 fotos habilitadas, ordenadas por fecha_carga desc."
+    },
+    {
+      "name": "photo_image",
+      "group": "media_library",
+      "method": "GET",
+      "path": "/api/media_library/photo/{photo_id}/image/",
+      "path_params": {
+        "photo_id": "integer"
+      },
+      "auth_required": false,
+      "responses": {
+        "200": {
+          "content_type": "image/jpeg",
+          "body": "bytes de imagen"
+        },
+        "404": {
+          "body": "Photo not found"
+        }
+      }
+    },
+    {
+      "name": "distributors_list",
+      "group": "media_library",
+      "method": "GET",
+      "path": "/api/media_library/distributors/",
+      "auth_required": false,
+      "responses": {
+        "200": {
+          "body": [
+            {
+              "id": 10,
+              "name": "Distribuidor Demo",
+              "logoUrl": "https://ljdit.com/api/media_library/distributor/10/logo/"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "distributor_logo",
+      "group": "media_library",
+      "method": "GET",
+      "path": "/api/media_library/distributor/{distributor_id}/logo/",
+      "path_params": {
+        "distributor_id": "integer"
+      },
+      "auth_required": false,
+      "responses": {
+        "200": {
+          "content_type": "image/png",
+          "body": "bytes de imagen"
+        },
+        "404": {
+          "body": "Not found"
+        }
+      }
+    }
+  ],
+  "non_api_json_endpoints": [
+    {
+      "name": "publish_fusion",
+      "method": "POST",
+      "path": "/publish/publicar-fusion/",
+      "auth_required": true,
+      "notes": "Endpoint JSON fuera de /api/. Requiere sesion login web."
+    },
+    {
+      "name": "verificar_conexion",
+      "method": "GET",
+      "path": "/publish/conexion/",
+      "auth_required": true,
+      "notes": "Estado de conexion de Facebook/Instagram para usuario autenticado."
+    },
+    {
+      "name": "listar_programadas",
+      "method": "GET",
+      "path": "/publish/programadas/",
+      "auth_required": false,
+      "notes": "Implementacion actual usa user_id fijo temporal en backend."
+    },
+    {
+      "name": "health_check",
+      "method": "GET",
+      "path": "/publish/health/",
+      "auth_required": false,
+      "notes": "Health endpoint del modulo publishing."
+    }
+  ],
+  "mobile_recommended_flow": [
+    "POST /api/accounts/mobile/ con credenciales",
+    "Guardar token y enviar Authorization: Bearer <token>",
+    "GET /api/accounts/me/ para cargar perfil y permisos",
+    "GET /api/media_library/photos/ y consumir imageUrl",
+    "GET /api/media_library/distributors/ y consumir logoUrl"
+  ],
+  "known_constraints": [
+    "El middleware permite acceso anonimo a /api/**; cada endpoint debe validar auth por si mismo cuando aplique.",
+    "Los endpoints web fuera de /api/ pueden cambiar mas seguido porque estan orientados al frontend Django.",
+    "api_login esta pensado para sesion web; para iOS se recomienda api_mobile_login + Bearer token."
+  ]
+}
+

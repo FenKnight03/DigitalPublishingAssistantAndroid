@@ -1,10 +1,10 @@
 package com.ljdit.digitalpublishing.model
 
 data class FusionPreviewResponse(
-    val image: String,
-    val logo_id: Int,
-    val logo_nombre: String,
-    val x: Int,
-    val y: Int,
-    val coordenada: Int
+    val ok: Boolean,
+    val data: PreviewData
+)
+
+data class PreviewData(
+    val image: String
 )

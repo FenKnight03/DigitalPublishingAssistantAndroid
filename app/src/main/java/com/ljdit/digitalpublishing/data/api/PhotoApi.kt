@@ -18,7 +18,7 @@ interface PhotoApi {
     @GET("api/media_library/distributors/")
     suspend fun getDistributors(): Response<List<Distributor>>
 
-    @POST("home/{photoId}/preview/")
+    @POST("api/media_library/fusion/preview/{photoId}/")
     suspend fun createFusionPreview(
         @Path("photoId") photoId: Int,
         @Body request: FusionPreviewRequest

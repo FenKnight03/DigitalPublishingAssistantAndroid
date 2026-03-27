@@ -5,6 +5,6 @@ import com.ljdit.digitalpublishing.data.api.RetrofitClient
 class DistributorRepository {
 
     suspend fun getDistributors() =
-        RetrofitClient.api.getDistributors()
+        RetrofitClient.photoApi.getDistributors()
 
 }

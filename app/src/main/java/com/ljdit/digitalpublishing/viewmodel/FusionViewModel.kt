@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ljdit.digitalpublishing.data.repository.PhotoRepository
@@ -29,7 +30,12 @@ class FusionViewModel : ViewModel() {
                 coordenada = coordinate
             )
 
+            Log.d("Fusion", "Enviando request...")
+
             val response = repository.createFusionPreview(photoId, request)
+
+            Log.d("Fusion", "Response code: ${response.code()}")
+            Log.d("Fusion", "Body: ${response.body()}")
 
             println("FUSION CODE: ${response.code()}")
 
