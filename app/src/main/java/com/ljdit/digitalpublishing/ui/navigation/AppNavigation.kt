@@ -49,11 +49,29 @@ fun AppNavigation() {
             val coordinate = backStackEntry.arguments?.getString("coordinate")
 
             FusionPreviewScreen(
+                navController = navController,
                 photoId = photoId,
                 distributorId = distributorId,
                 coordinate = coordinate
             )
 
+        }
+
+        composable("fusion_history") {
+            FusionHistoryScreen(navController)
+        }
+
+        composable("preview_from_history/{fusionId}") { backStackEntry ->
+
+            val fusionId = backStackEntry.arguments
+                ?.getString("fusionId")
+                ?: return@composable
+
+            FusionPreviewScreen(
+                navController = navController,
+                fusionId = fusionId,
+                fromHistory = true
+            )
         }
 
     }
