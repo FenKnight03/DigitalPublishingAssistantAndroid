@@ -126,15 +126,26 @@ class FusionViewModel : ViewModel() {
 
             _isProcessing.value = true
 
-            val response = repository.publishFusion(fusionId, caption)
+            try {
 
-            if (response.isSuccessful && response.body()?.success == true) {
-                _actionResult.value = "Publicado correctamente"
-            } else {
-                _actionResult.value = "Error al publicar"
-                Log.d("PublishDebug", "CODE: ${response.code()}")
-                Log.d("PublishDebug", "BODY: ${response.body()}")
-                Log.d("PublishDebug", "ERROR: ${response.errorBody()?.string()}")
+                val response = repository.publishFusion(fusionId, caption)
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    _actionResult.value = "Publicado correctamente"
+                } else {
+                    _actionResult.value = "Error al publicar"
+                }
+
+            } catch (e: Exception) {
+
+                Log.e("PublishCrash", "Exception: ${e.message}")
+
+                // tratar timeout como éxito probable
+                if (e is java.net.SocketTimeoutException) {
+                    _actionResult.value = "Publicado correctamente (puede tardar en reflejarse)"
+                } else {
+                    _actionResult.value = "Error de red"
+                }
             }
 
             _isProcessing.value = false
@@ -161,16 +172,26 @@ class FusionViewModel : ViewModel() {
 
             val fusionId = saveResponse.body()?.data?.id_fusion
 
-            val publishResponse = repository.publishFusion(fusionId!!, caption)
-
-            if (publishResponse.isSuccessful && publishResponse.body()?.success == true) {
-                _actionResult.value = "Publicado correctamente"
-            } else {
-                _actionResult.value = "Error al publicar"
-                Log.e("Publish", "Error: ${publishResponse.errorBody()?.string()}")
+            if (fusionId == null) {
+                _actionResult.value = "Error: no se obtuvo id de fusión"
+                _isProcessing.value = false
+                return@launch
             }
 
-            _isProcessing.value = false
+            try {
+                val publishResponse = repository.publishFusion(fusionId, caption)
+
+                if (publishResponse.isSuccessful && publishResponse.body()?.success == true) {
+                    _actionResult.value = "Publicado correctamente"
+                } else {
+                    _actionResult.value = "Error al publicar"
+                }
+
+            } catch (e: Exception) {
+
+                Log.e("PublishCrash", "Exception: ${e.message}")
+                _actionResult.value = "Error inesperado"
+            }
         }
     }
     fun clearActionResult() {

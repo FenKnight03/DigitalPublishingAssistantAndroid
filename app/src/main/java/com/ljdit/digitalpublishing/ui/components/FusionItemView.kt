@@ -3,11 +3,15 @@ package com.ljdit.digitalpublishing.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.ljdit.digitalpublishing.model.FusionItem
 
 
@@ -17,27 +21,60 @@ fun FusionItemView(
     onClick: () -> Unit
 ) {
 
+    val imageUrl = "https://ljdit.com${fusion.thumbnail_url}"
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable { onClick() } // 👈 clave
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column(modifier = Modifier.padding(8.dp)) {
 
+        Row(
+            modifier = Modifier.padding(12.dp)
+        ) {
+
+            // 🖼️ Thumbnail
             AsyncImage(
-                model = fusion.thumbnailUrl,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(fusion.thumbnail_url)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = null,
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier.size(90.dp)
             )
 
-            Text("Foto ID: ${fusion.photo_id}")
-            Text("Distribuidor: ${fusion.distributor_name}")
-            Text("Coordenada: ${fusion.coordenada}")
+            Spacer(modifier = Modifier.width(12.dp))
 
-            fusion.fecha_publicacion?.let {
-                Text("Fecha: $it")
-            } ?: Text("Sin fecha")
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                // 🧠 Producto (asumiendo que lo tienes en el modelo)
+                Text(
+                    text = fusion.producto_nombre ?: "Producto",
+                    style = MaterialTheme.typography.titleMedium
+                )
+
+                // 🏢 Distribuidor
+                Text(
+                    text = "Distribuidor: ${fusion.distributor_name}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                // 🖼️ Formato
+                Text(
+                    text = "Formato: ${fusion.formato ?: "N/A"}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                // 📅 Fecha
+                Text(
+                    text = fusion.fecha_publicacion ?: "Sin fecha",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }

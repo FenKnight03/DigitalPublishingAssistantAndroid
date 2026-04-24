@@ -50,11 +50,13 @@ fun FusionPreviewScreen(
     // 📢 Snackbar + navegación
     LaunchedEffect(actionResult) {
         actionResult?.let {
+
             snackbarHostState.showSnackbar(it)
 
-            navController.navigate("fusion_history") {
-                popUpTo("fusion_history") { inclusive = true }
-                launchSingleTop = true
+            if (it.contains("correctamente")) {
+                navController.navigate("fusion_history") {
+                    popUpTo("fusion_history") { inclusive = true }
+                }
             }
 
             viewModel.clearActionResult()
