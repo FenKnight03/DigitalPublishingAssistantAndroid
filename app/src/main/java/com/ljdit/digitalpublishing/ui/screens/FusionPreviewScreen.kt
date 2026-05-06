@@ -55,7 +55,10 @@ fun FusionPreviewScreen(
 
             if (it.contains("correctamente")) {
                 navController.navigate("fusion_history") {
-                    popUpTo("fusion_history") { inclusive = true }
+
+                    popUpTo("gallery")
+
+                    launchSingleTop = true
                 }
             }
 
@@ -81,7 +84,7 @@ fun FusionPreviewScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🖼️ IMAGEN
+            // IMAGEN
             preview?.let {
 
                 val base64 = it.data.image
@@ -118,7 +121,7 @@ fun FusionPreviewScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ✍️ CAPTION
+            // CAPTION
             OutlinedTextField(
                 value = caption,
                 onValueChange = { caption = it },
@@ -177,7 +180,7 @@ fun FusionPreviewScreen(
             }
         }
 
-        // 🔒 OVERLAY BLOQUEO
+        // OVERLAY BLOQUEO
         if (isProcessing) {
             Box(
                 modifier = Modifier
@@ -189,7 +192,7 @@ fun FusionPreviewScreen(
             }
         }
 
-        // 📢 Snackbar host
+        // Snackbar host
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)

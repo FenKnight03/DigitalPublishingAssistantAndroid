@@ -15,20 +15,32 @@ class PhotoViewModel : ViewModel() {
     private val _photos = MutableStateFlow<List<Photo>>(emptyList())
     val photos: StateFlow<List<Photo>> = _photos
 
-    init {
-        loadPhotos()
-    }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
 
-    private fun loadPhotos() {
+    fun loadPhotos() {
 
         viewModelScope.launch {
 
-            val response = repository.getPhotos()
+            _isLoading.value = true
 
-            if (response.isSuccessful) {
-                _photos.value = response.body() ?: emptyList()
+            try {
+
+                val response = repository.getPhotos()
+
+                if (response.isSuccessful) {
+                    _photos.value = response.body() ?: emptyList()
+                }
+
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
 
+            _isLoading.value = false
         }
+    }
+
+    fun getPhotoById(photoId: Int): Photo? {
+        return _photos.value.find { it.id == photoId }
     }
 }

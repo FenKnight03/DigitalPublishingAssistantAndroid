@@ -189,8 +189,25 @@ class FusionViewModel : ViewModel() {
 
             } catch (e: Exception) {
 
-                Log.e("PublishCrash", "Exception: ${e.message}")
-                _actionResult.value = "Error inesperado"
+                Log.e(
+                    "Publish",
+                    "Error publicando: ${e.message}"
+                )
+
+                _actionResult.value =
+
+                    if (
+                        e is java.net.SocketTimeoutException
+                    ) {
+
+                        "Instagram tardó demasiado en responder.\n\n" +
+                        "La publicación podría haberse realizado correctamente.\n" +
+                        "Verifica tu perfil."
+
+                    } else {
+
+                        "Ocurrió un error inesperado al publicar."
+                    }
             }
         }
     }

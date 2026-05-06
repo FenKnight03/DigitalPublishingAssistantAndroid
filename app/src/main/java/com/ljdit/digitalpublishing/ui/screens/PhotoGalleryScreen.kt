@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,6 +30,10 @@ fun PhotoGalleryScreen(
     navController: NavController,
     viewModel: PhotoViewModel = viewModel()
 ) {
+
+    LaunchedEffect(Unit) {
+        viewModel.loadPhotos()
+    }
 
     Column {
 
@@ -52,7 +58,9 @@ fun PhotoGalleryScreen(
                 PhotoCard(
                     photo = photo,
                     onClick = {
-                        navController.navigate("distributors/${photo.id}")
+                        navController.navigate(
+                            "viewer/${photo.id}"
+                        )
                     }
                 )
 

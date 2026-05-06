@@ -42,6 +42,9 @@ class PhotoRepository {
     suspend fun getFusionFull(fusionId: Int) =
         RetrofitClient.photoApi.getFusionFull(fusionId)
 
+    suspend fun getDistributors() =
+        RetrofitClient.photoApi.getDistributors()
+
     suspend fun publishFusion(
         fusionId: Int,
         caption: String,

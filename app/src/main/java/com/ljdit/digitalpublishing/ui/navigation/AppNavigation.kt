@@ -1,13 +1,16 @@
 package com.ljdit.digitalpublishing.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import com.ljdit.digitalpublishing.ui.screens.*
+import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 
 @Composable
 fun AppNavigation() {
 
     val navController = rememberNavController()
+    val photoViewModel: PhotoViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -15,31 +18,10 @@ fun AppNavigation() {
     ) {
 
         composable("gallery") {
-            PhotoGalleryScreen(navController)
-        }
-
-        composable("distributors/{photoId}") { backStackEntry ->
-
-            val photoId = backStackEntry.arguments?.getString("photoId")
-
-            DistributorSelectionScreen(
+            PhotoGalleryScreen(
                 navController = navController,
-                photoId = photoId
+                viewModel = photoViewModel
             )
-
-        }
-
-        composable("coordinates/{photoId}/{distributorId}") { backStackEntry ->
-
-            val photoId = backStackEntry.arguments?.getString("photoId")
-            val distributorId = backStackEntry.arguments?.getString("distributorId")
-
-            CoordinateSelectionScreen(
-                photoId = photoId,
-                distributorId = distributorId,
-                navController = navController
-            )
-
         }
 
         composable("preview/{photoId}/{distributorId}/{coordinate}") { backStackEntry ->
@@ -73,6 +55,22 @@ fun AppNavigation() {
                 fromHistory = true
             )
         }
+
+
+        composable(
+            "viewer/{photoId}"
+        ) { backStackEntry ->
+
+            val photoId =
+                backStackEntry.arguments?.getString("photoId")
+
+            PhotoViewerScreen(
+                navController = navController,
+                photoId = photoId,
+                photoViewModel = photoViewModel
+            )
+        }
+
 
     }
 }

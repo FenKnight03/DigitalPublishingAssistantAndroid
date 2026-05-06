@@ -27,9 +27,10 @@ object RetrofitClient {
         retrofit.create(AuthApi::class.java)
 
     val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
+        .addInterceptor(AuthInterceptor())
+        .connectTimeout(90, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
+        .writeTimeout(90, TimeUnit.SECONDS)
         .build()
 
 }
