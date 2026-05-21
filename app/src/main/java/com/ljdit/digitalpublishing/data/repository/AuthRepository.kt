@@ -1,11 +1,15 @@
 package com.ljdit.digitalpublishing.data.repository
 
+import LoginData
 import LoginRequest
 import com.ljdit.digitalpublishing.data.api.RetrofitClient
 
 class AuthRepository {
 
-    suspend fun login(username: String, password: String): String {
+    suspend fun login(
+        username: String,
+        password: String
+    ): LoginData {
 
         val response = RetrofitClient.authApi.login(
             LoginRequest(username, password)
@@ -22,7 +26,6 @@ class AuthRepository {
             throw Exception("Login failed")
         }
 
-        return body.data.token
+        return body.data
     }
-
 }

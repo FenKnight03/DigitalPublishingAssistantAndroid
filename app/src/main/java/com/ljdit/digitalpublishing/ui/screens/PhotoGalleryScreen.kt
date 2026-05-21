@@ -48,6 +48,18 @@ fun PhotoGalleryScreen(
 
         val photos = viewModel.photos.collectAsState()
 
+        Button(
+            onClick = {
+                navController.navigate("filters")
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        ) {
+
+            Text("Filtros")
+        }
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize()

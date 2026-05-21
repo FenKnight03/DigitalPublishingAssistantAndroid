@@ -8,19 +8,31 @@ data class Photo(
 
     val imageUrl: String,
 
-    @SerializedName("coordinates")
+    @SerializedName(value = "coordinates", alternate = ["coordenadas"])
     val coordinates: List<PhotoCoordinate>? = null,
 
-    val width: Float? = null,
+    @SerializedName(value = "width", alternate = ["ancho"])
+    val width: Int? = null,
 
-    val height: Float? = null
+    @SerializedName(value = "height", alternate = ["alto"])
+    val height: Int? = null,
+
+    val formato: String?,
+
+    val origen: String?,
+
+    val en_uso: Boolean?,
+
+    val fecha_carga: String?
 )
 
 data class PhotoCoordinate(
 
     val id: Int,
 
+    @SerializedName(value = "x", alternate = ["pos_x", "posicion_x", "coordenada_x"])
     val x: Float,
 
+    @SerializedName(value = "y", alternate = ["pos_y", "posicion_y", "coordenada_y"])
     val y: Float
 )

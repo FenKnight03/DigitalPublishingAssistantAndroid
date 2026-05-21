@@ -32,9 +32,16 @@ class AuthViewModel : ViewModel() {
 
             try {
 
-                val token = repository.login(username, password)
+                val loginData =
+                    repository.login(username, password)
 
-                SessionManager.save(context, token)
+                SessionManager.save(
+                    context = context,
+                    newToken = loginData.token,
+                    isAdminValue = loginData.user.is_admin,
+                    distributorIdValue =
+                        loginData.profile.distribuidor_id
+                )
 
             } catch (e: Exception) {
 

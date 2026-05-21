@@ -13,6 +13,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ljdit.digitalpublishing.viewmodel.FusionViewModel
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun FusionPreviewScreen(
@@ -31,6 +36,18 @@ fun FusionPreviewScreen(
     val actionResult by viewModel.actionResult.collectAsState()
 
     var caption by remember { mutableStateOf("") }
+
+    val calendar = remember {
+        Calendar.getInstance()
+    }
+
+    var scheduledTime by remember {
+        mutableStateOf<Long?>(null)
+    }
+
+    var scheduledDateText by remember {
+        mutableStateOf("")
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -131,6 +148,103 @@ fun FusionPreviewScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            OutlinedButton(
+                onClick = {
+
+                    DatePickerDialog(
+
+                        navController.context,
+
+                        { _, year, month, dayOfMonth ->
+
+                            calendar.set(
+                                Calendar.YEAR,
+                                year
+                            )
+
+                            calendar.set(
+                                Calendar.MONTH,
+                                month
+                            )
+
+                            calendar.set(
+                                Calendar.DAY_OF_MONTH,
+                                dayOfMonth
+                            )
+
+                            TimePickerDialog(
+
+                                navController.context,
+
+                                { _, hour, minute ->
+
+                                    calendar.set(
+                                        Calendar.HOUR_OF_DAY,
+                                        hour
+                                    )
+
+                                    calendar.set(
+                                        Calendar.MINUTE,
+                                        minute
+                                    )
+
+                                    scheduledTime =
+                                        calendar.timeInMillis
+
+                                    scheduledDateText =
+
+                                        SimpleDateFormat(
+                                            "dd/MM/yyyy HH:mm",
+                                            Locale.getDefault()
+                                        ).format(calendar.time)
+                                },
+
+                                calendar.get(Calendar.HOUR_OF_DAY),
+                                calendar.get(Calendar.MINUTE),
+                                true
+
+                            ).show()
+
+                        },
+
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+
+                    ).show()
+                },
+
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Text(
+
+                    if (scheduledDateText.isBlank()) {
+
+                        "Seleccionar fecha"
+
+                    } else {
+
+                        scheduledDateText
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextButton(
+                onClick = {
+
+                    scheduledTime = null
+
+                    scheduledDateText = ""
+                }
+            ) {
+
+                Text("Quitar programación")
+            }
+
+
             if (!fromHistory) {
 
                 Button(
@@ -155,7 +269,8 @@ fun FusionPreviewScreen(
                             photoId = photoId!!.toInt(),
                             distributorId = distributorId!!.toInt(),
                             coordinate = coordinate!!.toInt(),
-                            caption = caption
+                            caption = caption,
+                            scheduledTime = scheduledTime
                         )
                     },
                     enabled = !isProcessing,
@@ -169,7 +284,11 @@ fun FusionPreviewScreen(
                 Button(
                     onClick = {
                         finalFusionId?.let {
-                            viewModel.publishFusion(it, caption)
+                            viewModel.publishFusion(
+                                it,
+                                caption,
+                                scheduledTime
+                            )
                         }
                     },
                     enabled = !isProcessing,

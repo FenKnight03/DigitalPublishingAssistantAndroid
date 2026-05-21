@@ -20,27 +20,31 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.size.Size
 import com.ljdit.digitalpublishing.model.Photo
 import com.ljdit.digitalpublishing.model.PhotoCoordinate
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewerViewModel
 
-private fun PhotoCoordinate.xFraction(photo: Photo): Float? {
+private fun PhotoCoordinate.xFraction(sourceWidth: Int?): Float? {
     return when {
         x in 0f..1f -> x
-        photo.width != null && photo.width > 0f -> x / photo.width
+        sourceWidth != null && sourceWidth > 0 ->
+            x / sourceWidth.toFloat()
         else -> null
     }?.coerceIn(0f, 1f)
 }
 
-private fun PhotoCoordinate.yFraction(photo: Photo): Float? {
+private fun PhotoCoordinate.yFraction(sourceHeight: Int?): Float? {
     return when {
         y in 0f..1f -> y
-        photo.height != null && photo.height > 0f -> y / photo.height
+        sourceHeight != null && sourceHeight > 0 ->
+            y / sourceHeight.toFloat()
         else -> null
     }?.coerceIn(0f, 1f)
 }
@@ -114,6 +118,9 @@ fun PhotoViewerScreen(
         ) {
 
             val base64 = preview?.data?.image
+            var loadedImageSize by remember(photo?.id) {
+                mutableStateOf<Pair<Int, Int>?>(null)
+            }
 
             val bitmap = remember(base64) {
                 try {
@@ -149,7 +156,28 @@ fun PhotoViewerScreen(
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(it.imageUrl)
+                            .size(Size.ORIGINAL)
                             .crossfade(true)
+                            .listener(
+                                onSuccess = { _, result ->
+                                    val drawable = result.drawable
+                                    var width = drawable.intrinsicWidth
+                                    var height = drawable.intrinsicHeight
+
+                                    if (width <= 0 || height <= 0) {
+                                        val imageBitmap = drawable.toBitmap()
+                                        width = imageBitmap.width
+                                        height = imageBitmap.height
+                                    }
+
+                                    if (
+                                        width > 0 &&
+                                        height > 0
+                                    ) {
+                                        loadedImageSize = width to height
+                                    }
+                                }
+                            )
                             .build(),
                         contentDescription = null,
                         modifier = Modifier
@@ -160,16 +188,45 @@ fun PhotoViewerScreen(
             }
 
             val availableCoordinates = photo?.coordinates.orEmpty()
-            val imageAspectRatio = photo?.let {
-                val width = it.width
-                val height = it.height
+            val sourceImageSize =
+                bitmap?.let { it.width to it.height }
+                    ?: photo?.let {
+                        val width = it.width
+                        val height = it.height
 
-                if (width != null && height != null && width > 0f && height > 0f) {
-                    width / height
+                        if (
+                            width != null &&
+                            height != null &&
+                            width > 0 &&
+                            height > 0
+                        ) {
+                            width to height
+                        } else {
+                            null
+                        }
+                    }
+                    ?: loadedImageSize
+
+            val imageAspectRatio = photo?.let {
+
+                val width = sourceImageSize?.first
+                val height = sourceImageSize?.second
+
+                if (
+                    width != null &&
+                    height != null &&
+                    width > 0 &&
+                    height > 0
+                ) {
+
+                    width.toFloat() / height.toFloat()
+
                 } else {
+
                     null
                 }
             }
+
             val containerAspectRatio = maxWidth.value / maxHeight.value
             val displayedImageWidth =
                 if (imageAspectRatio != null && imageAspectRatio < containerAspectRatio) {
@@ -187,8 +244,8 @@ fun PhotoViewerScreen(
             val imageOffsetY = (maxHeight - displayedImageHeight) / 2
 
             availableCoordinates.forEach { coordinate ->
-                val xFraction = photo?.let { coordinate.xFraction(it) }
-                val yFraction = photo?.let { coordinate.yFraction(it) }
+                val xFraction = coordinate.xFraction(sourceImageSize?.first)
+                val yFraction = coordinate.yFraction(sourceImageSize?.second)
                 if (xFraction == null || yFraction == null) {
                     return@forEach
                 }
@@ -211,7 +268,15 @@ fun PhotoViewerScreen(
                                 Color.Red
                         )
                         .clickable {
-                            viewerViewModel.selectCoordinate(coordinate.id)
+
+                            viewerViewModel.selectCoordinate(
+                                coordinate.id
+                            )
+
+                            if (selectedDistributorId != null) {
+
+                                viewerViewModel.applyFusion()
+                            }
                         }
                 )
             }
@@ -227,7 +292,7 @@ fun PhotoViewerScreen(
 
         // Distribuidores
         Text(
-            text = "Selecciona distribuidor",
+            text = "Selecciona un logotipo y luego toca un punto en la imagen para aplicarlo.",
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -277,21 +342,6 @@ fun PhotoViewerScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        // aplicar cambios
-        Button(
-            onClick = {
-                viewerViewModel.applyFusion()
-            },
-            enabled =
-            selectedDistributorId != null &&
-                    selectedCoordinate != null &&
-                    !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-
-            Text("Aplicar cambios")
-        }
 
         Spacer(modifier = Modifier.height(12.dp))
 

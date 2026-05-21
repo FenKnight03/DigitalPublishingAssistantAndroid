@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.viewmodel
 
+import PublishResponse
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,10 +11,22 @@ import com.ljdit.digitalpublishing.model.FusionsData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.Response
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class FusionViewModel : ViewModel() {
 
     private val repository = PhotoRepository()
+
+    private val publishDateFormat = SimpleDateFormat(
+        "yyyy-MM-dd HH:mm:ss Z",
+        Locale.US
+    ).apply {
+        timeZone = TimeZone.getDefault()
+    }
 
     private val _preview = MutableStateFlow<FusionPreviewResponse?>(null)
     val preview: StateFlow<FusionPreviewResponse?> = _preview
@@ -33,14 +46,49 @@ class FusionViewModel : ViewModel() {
     private val _actionResult = MutableStateFlow<String?>(null)
     val actionResult: StateFlow<String?> = _actionResult
 
+    private fun scheduledTimeLabel(scheduledTime: Long?): String =
+        scheduledTime?.let {
+            val millis = if (it > 9_999_999_999L) it else it * 1000
+            "$it (${publishDateFormat.format(Date(millis))})"
+        } ?: "null"
+
+    private fun logPublishRequest(
+        source: String,
+        fusionId: Int,
+        caption: String,
+        scheduledTime: Long?
+    ) {
+        Log.d(
+            "Publish",
+            "$source request id_fusion=$fusionId, captionLength=${caption.length}, " +
+                "scheduledTime=${scheduledTimeLabel(scheduledTime)}"
+        )
+    }
+
+    private fun logPublishResponse(
+        source: String,
+        response: Response<PublishResponse>,
+        errorText: String?
+    ) {
+        Log.d("Publish", "$source url=${response.raw().request.url}")
+        Log.d("Publish", "$source code=${response.code()} message=${response.message()}")
+        Log.d("Publish", "$source body=${response.body()}")
+        Log.d("Publish", "$source errorBody=$errorText")
+    }
+
+    private fun readPublishErrorBody(response: Response<PublishResponse>): String? =
+        try {
+            response.errorBody()?.string()
+        } catch (e: Exception) {
+            "No se pudo leer error body: ${e.message}"
+        }
+
     fun generatePreview(
         photoId: Int,
         logoId: Int,
         coordinate: Int
     ) {
-
         viewModelScope.launch {
-
             _isLoading.value = true
 
             val request = FusionPreviewRequest(
@@ -48,7 +96,7 @@ class FusionViewModel : ViewModel() {
                 coordenada = coordinate
             )
 
-            Log.d("Fusion", "Enviando request...")
+            Log.d("Fusion", "Enviando request preview photoId=$photoId")
 
             val response = repository.createFusionPreview(photoId, request)
 
@@ -57,25 +105,16 @@ class FusionViewModel : ViewModel() {
             Log.d("Fusion", "Response code: ${response.code()}")
             Log.d("Fusion", "Body: ${response.body()}")
 
-            println("FUSION CODE: ${response.code()}")
-
             if (response.isSuccessful) {
-
-                println("FUSION OK")
-
                 _preview.value = response.body()
-
             } else {
-
-                println("FUSION ERROR BODY: ${response.errorBody()?.string()}")
-
+                Log.d("Publish", "Preview error: ${response.errorBody()?.string()}")
             }
-
         }
     }
+
     fun saveFusion(photoId: Int, distributorId: Int, coordinate: Int) {
         viewModelScope.launch {
-
             _isProcessing.value = true
 
             val response = repository.saveFusion(photoId, distributorId, coordinate)
@@ -107,7 +146,6 @@ class FusionViewModel : ViewModel() {
 
     fun loadFusionById(fusionId: Int) {
         viewModelScope.launch {
-
             val response = repository.getFusionFull(fusionId)
 
             Log.d("FusionDebug", "CODE: ${response.code()}")
@@ -121,34 +159,48 @@ class FusionViewModel : ViewModel() {
         }
     }
 
-    fun publishFusion(fusionId: Int, caption: String) {
+    fun publishFusion(
+        fusionId: Int,
+        caption: String,
+        scheduledTime: Long? = null
+    ) {
         viewModelScope.launch {
-
             _isProcessing.value = true
 
             try {
+                logPublishRequest(
+                    source = "publishFusion",
+                    fusionId = fusionId,
+                    caption = caption,
+                    scheduledTime = scheduledTime
+                )
 
-                val response = repository.publishFusion(fusionId, caption)
+                val response = repository.publishFusion(fusionId, caption, scheduledTime)
 
                 if (response.isSuccessful && response.body()?.success == true) {
-                    _actionResult.value = "Publicado correctamente"
+                    _actionResult.value =
+                        if (scheduledTime != null) {
+                            "Publicacion agendada correctamente"
+                        } else {
+                            "Publicado correctamente"
+                        }
                 } else {
-                    _actionResult.value = "Error al publicar"
+                    val errorText = readPublishErrorBody(response)
+                    logPublishResponse("publishFusion", response, errorText)
+                    _actionResult.value = errorText ?: "Error al publicar"
                 }
-
             } catch (e: Exception) {
+                Log.e("PublishCrash", "Exception publicando fusion $fusionId", e)
 
-                Log.e("PublishCrash", "Exception: ${e.message}")
-
-                // tratar timeout como éxito probable
-                if (e is java.net.SocketTimeoutException) {
-                    _actionResult.value = "Publicado correctamente (puede tardar en reflejarse)"
-                } else {
-                    _actionResult.value = "Error de red"
-                }
+                _actionResult.value =
+                    if (e is java.net.SocketTimeoutException) {
+                        "Publicado correctamente (puede tardar en reflejarse)"
+                    } else {
+                        "Error de red"
+                    }
+            } finally {
+                _isProcessing.value = false
             }
-
-            _isProcessing.value = false
         }
     }
 
@@ -156,61 +208,65 @@ class FusionViewModel : ViewModel() {
         photoId: Int,
         distributorId: Int,
         coordinate: Int,
-        caption: String
+        caption: String,
+        scheduledTime: Long? = null
     ) {
         viewModelScope.launch {
-
             _isProcessing.value = true
 
-            val saveResponse = repository.saveFusion(photoId, distributorId, coordinate)
-
-            if (!saveResponse.isSuccessful || saveResponse.body()?.ok != true) {
-                _actionResult.value = "Error al guardar"
-                _isProcessing.value = false
-                return@launch
-            }
-
-            val fusionId = saveResponse.body()?.data?.id_fusion
-
-            if (fusionId == null) {
-                _actionResult.value = "Error: no se obtuvo id de fusión"
-                _isProcessing.value = false
-                return@launch
-            }
-
             try {
-                val publishResponse = repository.publishFusion(fusionId, caption)
+                val saveResponse = repository.saveFusion(photoId, distributorId, coordinate)
 
-                if (publishResponse.isSuccessful && publishResponse.body()?.success == true) {
-                    _actionResult.value = "Publicado correctamente"
-                } else {
-                    _actionResult.value = "Error al publicar"
+                if (!saveResponse.isSuccessful || saveResponse.body()?.ok != true) {
+                    _actionResult.value = "Error al guardar"
+                    return@launch
                 }
 
-            } catch (e: Exception) {
+                val fusionId = saveResponse.body()?.data?.id_fusion
 
-                Log.e(
-                    "Publish",
-                    "Error publicando: ${e.message}"
+                if (fusionId == null) {
+                    _actionResult.value = "Error: no se obtuvo id de fusion"
+                    return@launch
+                }
+
+                logPublishRequest(
+                    source = "saveAndPublish",
+                    fusionId = fusionId,
+                    caption = caption,
+                    scheduledTime = scheduledTime
                 )
 
+                val publishResponse = repository.publishFusion(fusionId, caption, scheduledTime)
+
+                if (publishResponse.isSuccessful && publishResponse.body()?.success == true) {
+                    _actionResult.value =
+                        if (scheduledTime != null) {
+                            "Publicacion agendada correctamente"
+                        } else {
+                            "Publicado correctamente"
+                        }
+                } else {
+                    val errorText = readPublishErrorBody(publishResponse)
+                    logPublishResponse("saveAndPublish", publishResponse, errorText)
+                    _actionResult.value = errorText ?: "Error al publicar"
+                }
+            } catch (e: Exception) {
+                Log.e("Publish", "Error publicando", e)
+
                 _actionResult.value =
-
-                    if (
-                        e is java.net.SocketTimeoutException
-                    ) {
-
-                        "Instagram tardó demasiado en responder.\n\n" +
-                        "La publicación podría haberse realizado correctamente.\n" +
-                        "Verifica tu perfil."
-
+                    if (e is java.net.SocketTimeoutException) {
+                        "Instagram tardo demasiado en responder.\n\n" +
+                            "La publicacion podria haberse realizado correctamente.\n" +
+                            "Verifica tu perfil."
                     } else {
-
-                        "Ocurrió un error inesperado al publicar."
+                        "Ocurrio un error inesperado al publicar."
                     }
+            } finally {
+                _isProcessing.value = false
             }
         }
     }
+
     fun clearActionResult() {
         _actionResult.value = null
     }

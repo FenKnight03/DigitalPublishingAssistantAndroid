@@ -48,7 +48,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 🔥 Título
+            // Título
             Text(
                 text = "Digital Publishing Assistant",
                 fontSize = 28.sp,
@@ -65,7 +65,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
 
-            // 🔥 Logo placeholder
+            // Logo placeholder
             Text(
                 text = "Logo",
                 fontSize = 42.sp,
@@ -75,7 +75,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
 
-            // 🔥 Card login
+            // Card login
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)

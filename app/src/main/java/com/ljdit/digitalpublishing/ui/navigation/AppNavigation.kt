@@ -71,6 +71,14 @@ fun AppNavigation() {
             )
         }
 
+        composable("filters") {
+
+            FilterScreen(
+                navController = navController,
+                viewModel = photoViewModel
+            )
+        }
+
 
     }
 }

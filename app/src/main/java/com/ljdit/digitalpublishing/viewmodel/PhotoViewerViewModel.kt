@@ -2,6 +2,7 @@ package com.ljdit.digitalpublishing.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ljdit.digitalpublishing.core.session.SessionManager
 import com.ljdit.digitalpublishing.data.repository.PhotoRepository
 import com.ljdit.digitalpublishing.model.Distributor
 import com.ljdit.digitalpublishing.model.FusionPreviewRequest
@@ -16,6 +17,18 @@ class PhotoViewerViewModel : ViewModel() {
     private val repository = PhotoRepository()
 
     private lateinit var currentPhoto: Photo
+
+    // usuario actual
+    private var currentUserDistributorId: Int? = null
+    private var isAdmin: Boolean = false
+
+    fun setCurrentUser(
+        distributorId: Int?,
+        admin: Boolean
+    ) {
+        currentUserDistributorId = distributorId
+        isAdmin = admin
+    }
 
     // 🔹 Distribuidores
     private val _distributors =
@@ -77,8 +90,20 @@ class PhotoViewerViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
 
-                    _distributors.value =
+                    val allDistributors =
                         response.body() ?: emptyList()
+
+                    _distributors.value =
+                        if (SessionManager.isAdmin) {
+
+                            allDistributors
+
+                        } else {
+
+                            allDistributors.filter {
+                                it.id == SessionManager.distributorId
+                            }
+                        }
                 }
 
             } catch (e: Exception) {
@@ -96,6 +121,8 @@ class PhotoViewerViewModel : ViewModel() {
 
         _selectedDistributorId.value =
             distributorId
+
+        _preview.value = null
     }
 
     // Seleccionar coordenada
@@ -103,6 +130,8 @@ class PhotoViewerViewModel : ViewModel() {
 
         _selectedCoordinate.value =
             coordinateId
+
+        _preview.value = null
     }
 
     // Aplicar cambios

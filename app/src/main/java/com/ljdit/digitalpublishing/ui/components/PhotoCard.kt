@@ -13,6 +13,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ljdit.digitalpublishing.model.Photo
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun PhotoCard(
@@ -20,10 +22,28 @@ fun PhotoCard(
     onClick: () -> Unit = {}
 ) {
 
+    val borderColor = when (
+        photo.formato?.lowercase()
+    ) {
+
+        "horizontal",
+        "cuadrado" -> Color(0xFF42A5F5)
+
+        "vertical",
+        "semivertical" -> Color(0xFFE91E63)
+
+        else -> Color.LightGray
+    }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
             .padding(8.dp)
+            .border(
+                width = 2.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            )
             .clickable { onClick() }
     ) {
 
