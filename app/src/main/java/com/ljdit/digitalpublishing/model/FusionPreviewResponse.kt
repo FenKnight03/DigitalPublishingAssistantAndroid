@@ -20,5 +20,7 @@ data class FusionPreviewData(
     val y: Int,
 
     @SerializedName("coordenada")
-    val coordinate: Int
+    val coordinate: Int,
+
+    val caption: String? = null
 )

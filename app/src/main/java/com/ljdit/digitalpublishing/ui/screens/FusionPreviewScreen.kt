@@ -15,6 +15,9 @@ import androidx.navigation.NavController
 import com.ljdit.digitalpublishing.viewmodel.FusionViewModel
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.foundation.background
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -33,9 +36,18 @@ fun FusionPreviewScreen(
     val preview by viewModel.preview.collectAsState()
     val savedFusionId by viewModel.savedFusionId.collectAsState()
     val isProcessing by viewModel.isProcessing.collectAsState()
+    val processingMessage by viewModel.processingMessage.collectAsState()
     val actionResult by viewModel.actionResult.collectAsState()
 
-    var caption by remember { mutableStateOf("") }
+    var caption by remember {
+        mutableStateOf("")
+    }
+
+    LaunchedEffect(preview?.data?.caption, fromHistory) {
+        if (fromHistory) {
+            caption = preview?.data?.caption.orEmpty()
+        }
+    }
 
     val calendar = remember {
         Calendar.getInstance()
@@ -49,8 +61,6 @@ fun FusionPreviewScreen(
         mutableStateOf("")
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
     // 🔄 Cargar preview
     LaunchedEffect(fusionId) {
         if (fromHistory && fusionId != null) {
@@ -61,25 +71,6 @@ fun FusionPreviewScreen(
                 distributorId?.toInt() ?: return@LaunchedEffect,
                 coordinate?.toInt() ?: return@LaunchedEffect
             )
-        }
-    }
-
-    // 📢 Snackbar + navegación
-    LaunchedEffect(actionResult) {
-        actionResult?.let {
-
-            snackbarHostState.showSnackbar(it)
-
-            if (it.contains("correctamente")) {
-                navController.navigate("fusion_history") {
-
-                    popUpTo("gallery")
-
-                    launchSingleTop = true
-                }
-            }
-
-            viewModel.clearActionResult()
         }
     }
 
@@ -252,7 +243,8 @@ fun FusionPreviewScreen(
                         viewModel.saveFusion(
                             photoId!!.toInt(),
                             distributorId!!.toInt(),
-                            coordinate!!.toInt()
+                            coordinate!!.toInt(),
+                            caption
                         )
                     },
                     enabled = !isProcessing,
@@ -299,23 +291,93 @@ fun FusionPreviewScreen(
             }
         }
 
-        // OVERLAY BLOQUEO
-        if (isProcessing) {
+        // OVERLAY DE PROCESAMIENTO / RESULTADO
+        if (
+            isProcessing
+            || actionResult != null
+        ) {
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .fillMaxHeight(0.7f)
+                ) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+
+                        verticalArrangement = Arrangement.Center,
+
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        if (isProcessing) {
+
+                            CircularProgressIndicator()
+
+                            Spacer(
+                                modifier = Modifier.height(24.dp)
+                            )
+
+                            Text(
+                                text = processingMessage
+                                    ?: "Procesando..."
+                            )
+
+                        } else {
+
+                            Text(
+                                text = actionResult ?: "",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            Spacer(
+                                modifier = Modifier.height(32.dp)
+                            )
+
+                            Button(
+
+                                onClick = {
+
+                                    val shouldNavigateToHistory =
+                                        actionResult
+                                            ?.contains(
+                                                "correctamente",
+                                                ignoreCase = true
+                                            ) == true
+
+                                    viewModel.clearActionResult()
+
+                                    if (shouldNavigateToHistory) {
+
+                                        navController.navigate(
+                                            "fusion_history"
+                                        ) {
+
+                                            popUpTo("gallery")
+
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                }
+                            ) {
+
+                                Text("OK")
+                            }
+                        }
+                    }
+                }
             }
         }
-
-        // Snackbar host
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 
 }

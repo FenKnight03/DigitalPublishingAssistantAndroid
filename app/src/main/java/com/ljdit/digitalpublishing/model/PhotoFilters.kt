@@ -8,5 +8,8 @@ data class PhotoFilters(
 
     val contenidos: Set<String> = emptySet(),
 
-    val orden: String = "recientes"
+    val orden: String = "recientes",
+
+    val busqueda: String = ""
+
 )

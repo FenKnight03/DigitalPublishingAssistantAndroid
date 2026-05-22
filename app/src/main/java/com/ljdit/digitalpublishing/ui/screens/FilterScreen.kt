@@ -21,29 +21,36 @@ fun FilterScreen(
     val currentFilters by viewModel.filters.collectAsState()
 
     val formatos =
-        remember {
+        remember(currentFilters.formatos) {
             mutableStateListOf<String>().apply {
                 addAll(currentFilters.formatos)
             }
         }
 
     val origenes =
-        remember {
+        remember(currentFilters.origenes) {
             mutableStateListOf<String>().apply {
                 addAll(currentFilters.origenes)
             }
         }
 
     val contenidos =
-        remember {
+        remember(currentFilters.contenidos) {
             mutableStateListOf<String>().apply {
                 addAll(currentFilters.contenidos)
             }
         }
 
-    var orden by remember {
+    var orden by remember(currentFilters.orden) {
         mutableStateOf(currentFilters.orden)
     }
+
+    var busqueda by remember(currentFilters.busqueda) {
+        mutableStateOf(currentFilters.busqueda)
+    }
+
+    val suggestions by
+        viewModel.searchSuggestions.collectAsState()
 
     Column(
         modifier = Modifier
@@ -52,12 +59,73 @@ fun FilterScreen(
             .verticalScroll(rememberScrollState())
     ) {
 
+        // BUSQUEDA
         Text(
             text = "Filtros",
             style = MaterialTheme.typography.titleLarge
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Buscar producto",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+
+            value = busqueda,
+
+            onValueChange = {
+
+                busqueda = it
+
+                viewModel.updateSearchSuggestions(it)
+            },
+
+            modifier = Modifier.fillMaxWidth(),
+
+            placeholder = {
+                Text("Ej: B420H")
+            },
+
+            singleLine = true
+        )
+
+        if (
+            suggestions.isNotEmpty()
+            && busqueda.isNotBlank()
+        ) {
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Column {
+
+                suggestions.forEach { suggestion ->
+
+                    OutlinedButton(
+
+                        onClick = {
+
+                            busqueda = suggestion
+
+                            viewModel.updateSearchSuggestions("")
+                        },
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                    ) {
+
+                        Text(suggestion)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // FORMATOS
         Text(
@@ -86,43 +154,6 @@ fun FilterScreen(
                     } else {
 
                         formatos.remove(value)
-                    }
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ORIGEN
-        Text(
-            text = "Origen",
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        listOf(
-            "mexico",
-            "colombia",
-            "ecuador",
-            "argentina",
-            "chile",
-            "paraguay",
-            "uruguay"
-        ).forEach { value ->
-
-            FilterCheckbox(
-                label = value,
-                checked = origenes.contains(value),
-                onCheckedChange = { checked ->
-
-                    if (checked) {
-
-                        origenes.add(value)
-
-                    } else {
-
-                        origenes.remove(value)
                     }
                 }
             )
@@ -200,7 +231,42 @@ fun FilterScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // ORIGEN
+        Text(
+            text = "Origen",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        listOf(
+            "mexico",
+            "colombia",
+            "ecuador",
+            "argentina",
+            "chile",
+            "paraguay",
+            "uruguay"
+        ).forEach { value ->
+
+            FilterCheckbox(
+                label = value,
+                checked = origenes.contains(value),
+                onCheckedChange = { checked ->
+
+                    if (checked) {
+
+                        origenes.add(value)
+
+                    } else {
+
+                        origenes.remove(value)
+                    }
+                }
+            )
+        }
 
         // BOTÓN APLICAR
         Button(
@@ -210,16 +276,15 @@ fun FilterScreen(
 
                     PhotoFilters(
 
-                        formatos =
-                        formatos.toSet(),
+                        formatos = formatos.toSet(),
 
-                        origenes =
-                        origenes.toSet(),
+                        origenes = origenes.toSet(),
 
-                        contenidos =
-                        contenidos.toSet(),
+                        contenidos = contenidos.toSet(),
 
-                        orden = orden
+                        orden = orden,
+
+                        busqueda = busqueda
                     )
                 )
 

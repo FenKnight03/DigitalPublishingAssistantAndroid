@@ -23,7 +23,11 @@ data class Photo(
 
     val en_uso: Boolean?,
 
-    val fecha_carga: String?
+    val fecha_carga: String?,
+
+    val platform: PhotoPlatform? = null,
+
+    val producto: String? = null
 )
 
 data class PhotoCoordinate(
@@ -35,4 +39,13 @@ data class PhotoCoordinate(
 
     @SerializedName(value = "y", alternate = ["pos_y", "posicion_y", "coordenada_y"])
     val y: Float
+)
+
+data class PhotoPlatform(
+
+    val key: String?,
+
+    val name: String?,
+
+    val iconUrl: String?
 )

@@ -109,6 +109,23 @@ class PhotoViewModel : ViewModel() {
             }
         }
 
+        // BUSQUEDA
+        if (filters.busqueda.isNotBlank()) {
+
+            val query =
+                filters.busqueda
+                    .trim()
+                    .lowercase()
+
+            filtered = filtered.filter { photo ->
+
+                photo.producto
+                    ?.lowercase()
+                    ?.contains(query)
+                    ?: false
+            }
+        }
+
         // ORDEN
         filtered =
             when (filters.orden) {
@@ -127,5 +144,36 @@ class PhotoViewModel : ViewModel() {
             }
 
         _photos.value = filtered
+    }
+
+    private val _searchSuggestions =
+        MutableStateFlow<List<String>>(emptyList())
+
+    val searchSuggestions: StateFlow<List<String>>
+        = _searchSuggestions
+
+    fun updateSearchSuggestions(query: String) {
+
+        if (query.isBlank()) {
+
+            _searchSuggestions.value = emptyList()
+            return
+        }
+
+        val normalized =
+            query.trim().lowercase()
+
+        _searchSuggestions.value =
+
+            _allPhotos.value
+                .mapNotNull { it.producto }
+                .distinct()
+                .filter {
+
+                    it.lowercase()
+                        .contains(normalized)
+                }
+                .sorted()
+                .take(10)
     }
 }

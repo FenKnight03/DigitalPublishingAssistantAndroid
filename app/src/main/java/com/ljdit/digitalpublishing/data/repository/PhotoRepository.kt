@@ -52,14 +52,16 @@ class PhotoRepository {
     suspend fun saveFusion(
         photoId: Int,
         distributorId: Int,
-        coordinate: Int
+        coordinate: Int,
+        caption: String? = null
     ): Response<SaveFusionResponse> {
 
         return RetrofitClient.photoApi.saveFusion(
             photoId,
             FusionPreviewRequest(
                 logo_id = distributorId,
-                coordenada = coordinate
+                coordenada = coordinate,
+                caption = caption?.takeIf { it.isNotBlank() }
             )
         )
     }

@@ -41,6 +41,12 @@ class FusionViewModel : ViewModel() {
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _isProcessing = MutableStateFlow(false)
+    private val _processingMessage =
+        MutableStateFlow<String?>(null)
+
+    val processingMessage: StateFlow<String?>
+        = _processingMessage
+
     val isProcessing: StateFlow<Boolean> = _isProcessing
 
     private val _actionResult = MutableStateFlow<String?>(null)
@@ -86,14 +92,16 @@ class FusionViewModel : ViewModel() {
     fun generatePreview(
         photoId: Int,
         logoId: Int,
-        coordinate: Int
+        coordinate: Int,
+        caption: String = ""
     ) {
         viewModelScope.launch {
             _isLoading.value = true
 
             val request = FusionPreviewRequest(
                 logo_id = logoId,
-                coordenada = coordinate
+                coordenada = coordinate,
+                caption = caption
             )
 
             Log.d("Fusion", "Enviando request preview photoId=$photoId")
@@ -113,19 +121,30 @@ class FusionViewModel : ViewModel() {
         }
     }
 
-    fun saveFusion(photoId: Int, distributorId: Int, coordinate: Int) {
+    fun saveFusion(photoId: Int, distributorId: Int, coordinate: Int, caption: String) {
         viewModelScope.launch {
-            _isProcessing.value = true
+            startProcessing("Guardando...")
 
-            val response = repository.saveFusion(photoId, distributorId, coordinate)
+            try {
+                val response = repository.saveFusion(
+                    photoId = photoId,
+                    distributorId = distributorId,
+                    coordinate = coordinate,
+                    caption = caption
+                )
 
-            if (response.isSuccessful && response.body()?.ok == true) {
-                _actionResult.value = "Guardado correctamente"
-            } else {
+                if (response.isSuccessful && response.body()?.ok == true) {
+                    _savedFusionId.value = response.body()?.data?.id_fusion
+                    _actionResult.value = "Guardado correctamente"
+                } else {
+                    _actionResult.value = "Error al guardar"
+                }
+            } catch (e: Exception) {
+                Log.e("Fusion", "Error guardando fusion", e)
                 _actionResult.value = "Error al guardar"
+            } finally {
+                stopProcessing()
             }
-
-            _isProcessing.value = false
         }
     }
 
@@ -165,7 +184,14 @@ class FusionViewModel : ViewModel() {
         scheduledTime: Long? = null
     ) {
         viewModelScope.launch {
-            _isProcessing.value = true
+            startProcessing(
+
+                if (scheduledTime != null) {
+                    "Agendando publicación..."
+                } else {
+                    "Publicando..."
+                }
+            )
 
             try {
                 logPublishRequest(
@@ -199,7 +225,7 @@ class FusionViewModel : ViewModel() {
                         "Error de red"
                     }
             } finally {
-                _isProcessing.value = false
+                stopProcessing()
             }
         }
     }
@@ -212,10 +238,22 @@ class FusionViewModel : ViewModel() {
         scheduledTime: Long? = null
     ) {
         viewModelScope.launch {
-            _isProcessing.value = true
+            startProcessing(
+
+                if (scheduledTime != null) {
+                    "Agendando publicación..."
+                } else {
+                    "Publicando..."
+                }
+            )
 
             try {
-                val saveResponse = repository.saveFusion(photoId, distributorId, coordinate)
+                val saveResponse = repository.saveFusion(
+                    photoId = photoId,
+                    distributorId = distributorId,
+                    coordinate = coordinate,
+                    caption = caption
+                )
 
                 if (!saveResponse.isSuccessful || saveResponse.body()?.ok != true) {
                     _actionResult.value = "Error al guardar"
@@ -223,6 +261,14 @@ class FusionViewModel : ViewModel() {
                 }
 
                 val fusionId = saveResponse.body()?.data?.id_fusion
+
+                _processingMessage.value =
+
+                    if (scheduledTime != null) {
+                        "Agendando publicación..."
+                    } else {
+                        "Publicando..."
+                    }
 
                 if (fusionId == null) {
                     _actionResult.value = "Error: no se obtuvo id de fusion"
@@ -262,12 +308,26 @@ class FusionViewModel : ViewModel() {
                         "Ocurrio un error inesperado al publicar."
                     }
             } finally {
-                _isProcessing.value = false
+                stopProcessing()
             }
         }
     }
 
     fun clearActionResult() {
         _actionResult.value = null
+    }
+
+    private fun startProcessing(message: String) {
+
+        _processingMessage.value = message
+
+        _isProcessing.value = true
+    }
+
+    private fun stopProcessing() {
+
+        _isProcessing.value = false
+
+        _processingMessage.value = null
     }
 }

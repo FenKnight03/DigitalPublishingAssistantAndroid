@@ -7,5 +7,6 @@ data class SaveFusionResponse(
 
 data class SaveFusionData(
     val id_fusion: Int,
+    val caption: String? = null,
     val mensaje: String
 )
