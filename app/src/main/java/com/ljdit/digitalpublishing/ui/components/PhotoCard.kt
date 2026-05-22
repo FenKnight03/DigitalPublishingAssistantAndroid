@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.ui.components
 
+import android.icu.number.Scale
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,16 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.ljdit.digitalpublishing.R
 import com.ljdit.digitalpublishing.model.Photo
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 
 @Composable
 fun PhotoCard(
@@ -63,14 +74,67 @@ fun PhotoCard(
 
         Box {
 
-            Image(
-                painter = rememberAsyncImagePainter(photo.imageUrl),
+            SubcomposeAsyncImage(
+
+                model = ImageRequest.Builder(
+                    LocalContext.current
+                )
+                    .data(photo.imageUrl)
+                    .crossfade(true)
+                    .memoryCacheKey(photo.imageUrl)
+                    .diskCacheKey(photo.imageUrl)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .networkCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+
                 contentDescription = null,
+
+                contentScale = ContentScale.Crop,
+
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(160.dp),
-                contentScale = ContentScale.Crop
-            )
+                    .height(160.dp)
+
+            ) {
+
+                when (painter.state) {
+
+                    is AsyncImagePainter.State.Loading -> {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    is AsyncImagePainter.State.Error -> {
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+
+                            Text(
+                                text = "Error",
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+
+                    else -> {
+
+                        SubcomposeAsyncImageContent()
+                    }
+                }
+            }
 
             platformIcon?.let {
 

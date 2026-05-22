@@ -40,7 +40,9 @@ class AuthViewModel : ViewModel() {
                     newToken = loginData.token,
                     isAdminValue = loginData.user.is_admin,
                     distributorIdValue =
-                        loginData.profile.distribuidor_id
+                        loginData.profile.distribuidor_id,
+                    distributorNameValue =
+                        loginData.profile.distribuidor_nombre
                 )
 
             } catch (e: Exception) {

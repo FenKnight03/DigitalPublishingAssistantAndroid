@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -58,305 +59,317 @@ fun PhotoViewerScreen(
     viewerViewModel: PhotoViewerViewModel = viewModel()
 ) {
 
-    val photos by photoViewModel.photos.collectAsState()
+        Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .background(color = White)
+            ) {
 
-    val photo = photos.find {
-        it.id.toString() == photoId
-    }
+                val photos by photoViewModel.photos.collectAsState()
 
-    LaunchedEffect(photo) {
-
-        photo?.let {
-            viewerViewModel.setPhoto(it)
-        }
-    }
-
-    val distributors by viewerViewModel.distributors.collectAsState()
-    val selectedCoordinate by viewerViewModel.selectedCoordinate.collectAsState()
-    val selectedDistributorId by viewerViewModel.selectedDistributorId.collectAsState()
-    val preview by viewerViewModel.preview.collectAsState()
-    val isLoading by viewerViewModel.isLoading.collectAsState()
-
-    LaunchedEffect(photoId, photos.isEmpty()) {
-        if (photoId != null && photos.isEmpty()) {
-            photoViewModel.loadPhotos()
-        }
-    }
-
-    // Inicializar
-    LaunchedEffect(photoId) {
-
-        if (photoId != null) {
-
-            if (photos.isEmpty()) {
-                photoViewModel.loadPhotos()
-            }
-
-            viewerViewModel.loadDistributors()
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text(
-            text = "Photo Viewer",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Imagen
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(350.dp),
-            contentAlignment = Alignment.Center
-        ) {
-
-            val base64 = preview?.data?.image
-            var loadedImageSize by remember(photo?.id) {
-                mutableStateOf<Pair<Int, Int>?>(null)
-            }
-
-            val bitmap = remember(base64) {
-                try {
-
-                    if (base64.isNullOrEmpty()) return@remember null
-
-                    val cleanBase64 =
-                        base64.substringAfter("base64,", base64)
-
-                    val bytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-
-                } catch (e: Exception) {
-                    null
+                val photo = photos.find {
+                    it.id.toString() == photoId
                 }
-            }
 
-            if (bitmap != null) {
+                LaunchedEffect(photo) {
 
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = null,
+                    photo?.let {
+                        viewerViewModel.setPhoto(it)
+                    }
+                }
+
+                val distributors by viewerViewModel.distributors.collectAsState()
+                val selectedCoordinate by viewerViewModel.selectedCoordinate.collectAsState()
+                val selectedDistributorId by viewerViewModel.selectedDistributorId.collectAsState()
+                val preview by viewerViewModel.preview.collectAsState()
+                val isLoading by viewerViewModel.isLoading.collectAsState()
+
+                LaunchedEffect(photoId, photos.isEmpty()) {
+                    if (photoId != null && photos.isEmpty()) {
+                        photoViewModel.loadPhotos()
+                    }
+                }
+
+                // Inicializar
+                LaunchedEffect(photoId) {
+
+                    if (photoId != null) {
+
+                        if (photos.isEmpty()) {
+                            photoViewModel.loadPhotos()
+                        }
+
+                        viewerViewModel.loadDistributors()
+                    }
+                }
+
+                Column(
                     modifier = Modifier
-                        .fillMaxSize(),
-                    contentScale = ContentScale.Fit
-                )
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
 
-            } else {
+                    Text(
+                        text = "Photo Viewer",
+                        style = MaterialTheme.typography.titleLarge
+                    )
 
-                photo?.let {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(it.imageUrl)
-                            .size(Size.ORIGINAL)
-                            .crossfade(true)
-                            .listener(
-                                onSuccess = { _, result ->
-                                    val drawable = result.drawable
-                                    var width = drawable.intrinsicWidth
-                                    var height = drawable.intrinsicHeight
+                    // Imagen
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(350.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
 
-                                    if (width <= 0 || height <= 0) {
-                                        val imageBitmap = drawable.toBitmap()
-                                        width = imageBitmap.width
-                                        height = imageBitmap.height
-                                    }
+                        val base64 = preview?.data?.image
+                        var loadedImageSize by remember(photo?.id) {
+                            mutableStateOf<Pair<Int, Int>?>(null)
+                        }
+
+                        val bitmap = remember(base64) {
+                            try {
+
+                                if (base64.isNullOrEmpty()) return@remember null
+
+                                val cleanBase64 =
+                                    base64.substringAfter("base64,", base64)
+
+                                val bytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+
+                                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
+
+                        if (bitmap != null) {
+
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                contentScale = ContentScale.Fit
+                            )
+
+                        } else {
+
+                            photo?.let {
+
+                                AsyncImage(
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(it.imageUrl)
+                                        .size(Size.ORIGINAL)
+                                        .crossfade(true)
+                                        .listener(
+                                            onSuccess = { _, result ->
+                                                val drawable = result.drawable
+                                                var width = drawable.intrinsicWidth
+                                                var height = drawable.intrinsicHeight
+
+                                                if (width <= 0 || height <= 0) {
+                                                    val imageBitmap = drawable.toBitmap()
+                                                    width = imageBitmap.width
+                                                    height = imageBitmap.height
+                                                }
+
+                                                if (
+                                                    width > 0 &&
+                                                    height > 0
+                                                ) {
+                                                    loadedImageSize = width to height
+                                                }
+                                            }
+                                        )
+                                        .build(),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
+
+                        val availableCoordinates = photo?.coordinates.orEmpty()
+                        val sourceImageSize =
+                            bitmap?.let { it.width to it.height }
+                                ?: photo?.let {
+                                    val width = it.width
+                                    val height = it.height
 
                                     if (
+                                        width != null &&
+                                        height != null &&
                                         width > 0 &&
                                         height > 0
                                     ) {
-                                        loadedImageSize = width to height
+                                        width to height
+                                    } else {
+                                        null
                                     }
                                 }
-                            )
-                            .build(),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-            }
+                                ?: loadedImageSize
 
-            val availableCoordinates = photo?.coordinates.orEmpty()
-            val sourceImageSize =
-                bitmap?.let { it.width to it.height }
-                    ?: photo?.let {
-                        val width = it.width
-                        val height = it.height
+                        val imageAspectRatio = photo?.let {
 
-                        if (
-                            width != null &&
-                            height != null &&
-                            width > 0 &&
-                            height > 0
-                        ) {
-                            width to height
-                        } else {
-                            null
-                        }
-                    }
-                    ?: loadedImageSize
+                            val width = sourceImageSize?.first
+                            val height = sourceImageSize?.second
 
-            val imageAspectRatio = photo?.let {
+                            if (
+                                width != null &&
+                                height != null &&
+                                width > 0 &&
+                                height > 0
+                            ) {
 
-                val width = sourceImageSize?.first
-                val height = sourceImageSize?.second
+                                width.toFloat() / height.toFloat()
 
-                if (
-                    width != null &&
-                    height != null &&
-                    width > 0 &&
-                    height > 0
-                ) {
+                            } else {
 
-                    width.toFloat() / height.toFloat()
-
-                } else {
-
-                    null
-                }
-            }
-
-            val containerAspectRatio = maxWidth.value / maxHeight.value
-            val displayedImageWidth =
-                if (imageAspectRatio != null && imageAspectRatio < containerAspectRatio) {
-                    maxHeight * imageAspectRatio
-                } else {
-                    maxWidth
-                }
-            val displayedImageHeight =
-                if (imageAspectRatio != null && imageAspectRatio > containerAspectRatio) {
-                    maxWidth / imageAspectRatio
-                } else {
-                    maxHeight
-                }
-            val imageOffsetX = (maxWidth - displayedImageWidth) / 2
-            val imageOffsetY = (maxHeight - displayedImageHeight) / 2
-
-            availableCoordinates.forEach { coordinate ->
-                val xFraction = coordinate.xFraction(sourceImageSize?.first)
-                val yFraction = coordinate.yFraction(sourceImageSize?.second)
-                if (xFraction == null || yFraction == null) {
-                    return@forEach
-                }
-
-                val markerSize = 24.dp
-
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .offset(
-                            x = imageOffsetX + (displayedImageWidth * xFraction) - (markerSize / 2),
-                            y = imageOffsetY + (displayedImageHeight * yFraction) - (markerSize / 2)
-                        )
-                        .size(markerSize)
-                        .clip(CircleShape)
-                        .background(
-                            if (selectedCoordinate == coordinate.id)
-                                Color.Green
-                            else
-                                Color.Red
-                        )
-                        .clickable {
-
-                            viewerViewModel.selectCoordinate(
-                                coordinate.id
-                            )
-
-                            if (selectedDistributorId != null) {
-
-                                viewerViewModel.applyFusion()
+                                null
                             }
                         }
-                )
-            }
 
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                )
-            }
-        }
+                        val containerAspectRatio = maxWidth.value / maxHeight.value
+                        val displayedImageWidth =
+                            if (imageAspectRatio != null && imageAspectRatio < containerAspectRatio) {
+                                maxHeight * imageAspectRatio
+                            } else {
+                                maxWidth
+                            }
+                        val displayedImageHeight =
+                            if (imageAspectRatio != null && imageAspectRatio > containerAspectRatio) {
+                                maxWidth / imageAspectRatio
+                            } else {
+                                maxHeight
+                            }
+                        val imageOffsetX = (maxWidth - displayedImageWidth) / 2
+                        val imageOffsetY = (maxHeight - displayedImageHeight) / 2
 
-        Spacer(modifier = Modifier.height(24.dp))
+                        availableCoordinates.forEach { coordinate ->
+                            val xFraction = coordinate.xFraction(sourceImageSize?.first)
+                            val yFraction = coordinate.yFraction(sourceImageSize?.second)
+                            if (xFraction == null || yFraction == null) {
+                                return@forEach
+                            }
 
-        // Distribuidores
-        Text(
-            text = "Selecciona un logotipo y luego toca un punto en la imagen para aplicarlo.",
-            style = MaterialTheme.typography.titleMedium
-        )
+                            val markerSize = 24.dp
 
-        Spacer(modifier = Modifier.height(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .offset(
+                                        x = imageOffsetX + (displayedImageWidth * xFraction) - (markerSize / 2),
+                                        y = imageOffsetY + (displayedImageHeight * yFraction) - (markerSize / 2)
+                                    )
+                                    .size(markerSize)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (selectedCoordinate == coordinate.id)
+                                            Color.Green
+                                        else
+                                            Color.Red
+                                    )
+                                    .clickable {
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+                                        viewerViewModel.selectCoordinate(
+                                            coordinate.id
+                                        )
 
-            items(distributors) { distributor ->
+                                        if (selectedDistributorId != null) {
 
-                Card(
-                    modifier = Modifier
-                        .width(100.dp)
-                        .clickable {
-                            viewerViewModel.selectDistributor(distributor.id)
-                        },
-                    colors = CardDefaults.cardColors(
-                        containerColor =
-                        if (selectedDistributorId == distributor.id)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
+                                            viewerViewModel.applyFusion()
+                                        }
+                                    }
+                            )
+                        }
+
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Distribuidores
+                    Text(
+                        text = "Selecciona un logotipo y luego toca un punto en la imagen para aplicarlo.",
+                        style = MaterialTheme.typography.titleMedium
                     )
-                ) {
 
-                    Column(
-                        modifier = Modifier.padding(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 
-                        AsyncImage(
-                            model = distributor.logoUrl,
-                            contentDescription = null,
-                            modifier = Modifier.size(60.dp)
-                        )
+                        items(distributors) { distributor ->
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                            Card(
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .clickable {
+                                        viewerViewModel.selectDistributor(distributor.id)
+                                    },
+                                colors = CardDefaults.cardColors(
+                                    containerColor =
+                                        if (selectedDistributorId == distributor.id)
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.surface
+                                )
+                            ) {
 
-                        Text(
-                            text = distributor.name,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                                Column(
+                                    modifier = Modifier.padding(8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+
+                                    AsyncImage(
+                                        model = distributor.logoUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(60.dp)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Text(
+                                        text = distributor.name,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // ir a preview
+                    Button(
+                        onClick = {
+
+                            navController.navigate(
+                                "preview/${photo?.id}/${selectedDistributorId}/${selectedCoordinate}"
+                            )
+                        },
+                        enabled = preview?.ok == true && !isLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Vista previa")
                     }
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // ir a preview
-        Button(
-            onClick = {
-
-                navController.navigate(
-                    "preview/${photo?.id}/${selectedDistributorId}/${selectedCoordinate}"
-                )
-            },
-            enabled = preview?.ok == true && !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Vista previa")
-        }
-    }
 }

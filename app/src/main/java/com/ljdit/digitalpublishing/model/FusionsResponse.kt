@@ -23,11 +23,16 @@ data class FusionItem(
     @SerializedName("distributor_name")
     val distributor_name: String,
 
+    @SerializedName(value = "distributor_id", alternate = ["distribuidor_id"])
+    val distributorId: Int? = null,
+
     @SerializedName("producto_nombre")
     val producto_nombre: String?,
 
     val formato: String?,
 
-    val fecha_publicacion: String?
+    val fecha_publicacion: String?,
+
+    val caption: String? = null
 
 )

@@ -1,10 +1,13 @@
 package com.ljdit.digitalpublishing.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
@@ -15,44 +18,56 @@ fun CoordinateSelectionScreen(
     navController: NavController
 ) {
 
-    Column(
-        modifier = Modifier.padding(20.dp)
-    ) {
+        Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .background(color = White)
+            ) {
 
-        Text("Elegir posición del logo")
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
 
-        Spacer(modifier = Modifier.height(20.dp))
+                    Text("Elegir posición del logo")
 
-        Button(onClick = {
+                    Spacer(modifier = Modifier.height(20.dp))
 
-            navController.navigate(
-                "preview/$photoId/$distributorId/1"
-            )
+                    Button(onClick = {
 
-        }) {
-            Text("Posición 1")
+                        navController.navigate(
+                            "preview/$photoId/$distributorId/1"
+                        )
+
+                    }) {
+                        Text("Posición 1")
+                    }
+
+                    Button(onClick = {
+
+                        navController.navigate(
+                            "preview/$photoId/$distributorId/2"
+                        )
+
+                    }) {
+                        Text("Posición 2")
+                    }
+
+                    Button(onClick = {
+
+                        navController.navigate(
+                            "preview/$photoId/$distributorId/3"
+                        )
+
+                    }) {
+                        Text("Posición 3")
+                    }
+
+                }
+            }
         }
-
-        Button(onClick = {
-
-            navController.navigate(
-                "preview/$photoId/$distributorId/2"
-            )
-
-        }) {
-            Text("Posición 2")
-        }
-
-        Button(onClick = {
-
-            navController.navigate(
-                "preview/$photoId/$distributorId/3"
-            )
-
-        }) {
-            Text("Posición 3")
-        }
-
-    }
 
 }

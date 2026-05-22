@@ -9,11 +9,15 @@ object SessionManager {
     private const val KEY = "auth_token"
     private const val KEY_IS_ADMIN = "is_admin"
     private const val KEY_DISTRIBUTOR_ID = "distributor_id"
+    private const val KEY_DISTRIBUTOR_NAME = "distributor_name"
 
     var isAdmin: Boolean = false
         private set
 
     var distributorId: Int? = null
+        private set
+
+    var distributorName: String? = null
         private set
 
     private val _isLoggedIn = MutableStateFlow(false)
@@ -37,6 +41,9 @@ object SessionManager {
             else
                 null
 
+        distributorName =
+            prefs.getString(KEY_DISTRIBUTOR_NAME, null)
+
         if (distributorId == -1) {
             distributorId = null
         }
@@ -48,26 +55,28 @@ object SessionManager {
         context: Context,
         newToken: String,
         isAdminValue: Boolean,
-        distributorIdValue: Int?
+        distributorIdValue: Int?,
+        distributorNameValue: String?
     ) {
 
         token = newToken
         isAdmin = isAdminValue
         distributorId = distributorIdValue
+        distributorName = distributorNameValue
 
         context.getSharedPreferences("auth", Context.MODE_PRIVATE)
             .edit()
             .putString(KEY, newToken)
             .putBoolean(KEY_IS_ADMIN, isAdminValue)
+            .putString(KEY_DISTRIBUTOR_NAME, distributorNameValue)
+            .apply {
+                if (distributorIdValue != null) {
+                    putInt(KEY_DISTRIBUTOR_ID, distributorIdValue)
+                } else {
+                    remove(KEY_DISTRIBUTOR_ID)
+                }
+            }
             .apply()
-
-        distributorIdValue?.let {
-
-            context.getSharedPreferences("auth", Context.MODE_PRIVATE)
-                .edit()
-                .putInt(KEY_DISTRIBUTOR_ID, it)
-                .apply()
-        }
 
         _isLoggedIn.value = true
     }
@@ -79,6 +88,9 @@ object SessionManager {
         context.getSharedPreferences("auth", Context.MODE_PRIVATE)
             .edit()
             .remove(KEY)
+            .remove(KEY_IS_ADMIN)
+            .remove(KEY_DISTRIBUTOR_ID)
+            .remove(KEY_DISTRIBUTOR_NAME)
             .apply()
 
         _isLoggedIn.value = false
