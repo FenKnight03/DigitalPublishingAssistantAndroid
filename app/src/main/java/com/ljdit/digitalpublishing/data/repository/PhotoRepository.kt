@@ -76,6 +76,9 @@ class PhotoRepository {
     suspend fun getDistributors() =
         RetrofitClient.photoApi.getDistributors()
 
+    suspend fun getConnectionStatus() =
+        RetrofitClient.photoApi.getConnectionStatus()
+
     suspend fun publishFusion(
         fusionId: Int,
         caption: String,

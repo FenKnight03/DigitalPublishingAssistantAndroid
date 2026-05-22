@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.ljdit.digitalpublishing.core.session.SessionManager
 import com.ljdit.digitalpublishing.ui.navigation.AppNavigation
 import com.ljdit.digitalpublishing.ui.theme.DigitalPublishingAssistantAndroidTheme
 import com.ljdit.digitalpublishing.ui.screens.PhotoGalleryScreen
@@ -19,6 +20,8 @@ import com.ljdit.digitalpublishing.ui.screens.PhotoGalleryScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        SessionManager.init(this)
 
         enableEdgeToEdge()
 

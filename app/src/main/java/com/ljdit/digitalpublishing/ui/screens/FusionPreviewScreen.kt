@@ -371,10 +371,12 @@ fun FusionPreviewScreen(
                                                 if (shouldNavigateToHistory) {
 
                                                     navController.navigate(
-                                                        "fusion_history"
+                                                        "home/1"
                                                     ) {
 
-                                                        popUpTo("gallery")
+                                                        popUpTo("home") {
+                                                            inclusive = true
+                                                        }
 
                                                         launchSingleTop = true
                                                     }

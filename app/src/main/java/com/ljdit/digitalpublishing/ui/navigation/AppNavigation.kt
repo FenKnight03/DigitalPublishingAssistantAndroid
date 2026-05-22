@@ -14,8 +14,27 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "gallery"
+        startDestination = "home"
     ) {
+
+        composable("home") {
+            MainTabsScreen(
+                navController = navController,
+                photoViewModel = photoViewModel
+            )
+        }
+
+        composable("home/{initialTab}") { backStackEntry ->
+            MainTabsScreen(
+                navController = navController,
+                photoViewModel = photoViewModel,
+                initialTab =
+                    backStackEntry.arguments
+                        ?.getString("initialTab")
+                        ?.toIntOrNull()
+                        ?: 0
+            )
+        }
 
         composable("gallery") {
             PhotoGalleryScreen(

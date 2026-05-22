@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +57,8 @@ private fun FusionItem.belongsToCurrentDistributor(): Boolean {
 @Composable
 fun FusionHistoryScreen(
     navController: NavController,
-    viewModel: FusionViewModel = viewModel()
+    viewModel: FusionViewModel = viewModel(),
+    applyStatusBarPadding: Boolean = true
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -65,7 +66,13 @@ fun FusionHistoryScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .windowInsetsPadding(WindowInsets.statusBars)
+                .then(
+                    if (applyStatusBarPadding) {
+                        Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                    } else {
+                        Modifier
+                    }
+                )
                 .background(color = White)
         ) {
             val fusions by viewModel.fusions.collectAsState()
@@ -80,7 +87,7 @@ fun FusionHistoryScreen(
             var selectedTab by remember { mutableStateOf(0) }
 
             Column(modifier = Modifier.fillMaxSize()) {
-                TabRow(selectedTabIndex = selectedTab) {
+                PrimaryTabRow(selectedTabIndex = selectedTab) {
                     tabs.forEachIndexed { index, title ->
                         Tab(
                             selected = selectedTab == index,

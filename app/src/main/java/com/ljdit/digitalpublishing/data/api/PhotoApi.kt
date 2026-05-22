@@ -2,6 +2,7 @@ package com.ljdit.digitalpublishing.data.api
 
 import PublishRequest
 import PublishResponse
+import com.ljdit.digitalpublishing.model.ConnectionStatus
 import com.ljdit.digitalpublishing.model.Distributor
 import com.ljdit.digitalpublishing.model.FusionPreviewRequest
 import com.ljdit.digitalpublishing.model.FusionPreviewResponse
@@ -80,5 +81,8 @@ interface PhotoApi {
     suspend fun publishFusion(
         @Body body: PublishRequest
     ): Response<PublishResponse>
+
+    @GET("api/publishing/conexion/")
+    suspend fun getConnectionStatus(): Response<ConnectionStatus>
 
 }

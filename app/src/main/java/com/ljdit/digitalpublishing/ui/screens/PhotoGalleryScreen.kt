@@ -41,7 +41,8 @@ import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 @Composable
 fun PhotoGalleryScreen(
     navController: NavController,
-    viewModel: PhotoViewModel = viewModel()
+    viewModel: PhotoViewModel = viewModel(),
+    applyStatusBarPadding: Boolean = true
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -49,7 +50,13 @@ fun PhotoGalleryScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .windowInsetsPadding(WindowInsets.statusBars)
+                .then(
+                    if (applyStatusBarPadding) {
+                        Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                    } else {
+                        Modifier
+                    }
+                )
                 .background(color = White)
         ) {
 
@@ -61,16 +68,6 @@ fun PhotoGalleryScreen(
                 viewModel.photos.collectAsState()
 
             Column {
-
-                Button(
-                    onClick = { navController.navigate("fusion_history") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-                    Text("Mis imagenes")
-                }
-
 
                 Button(
                     onClick = {

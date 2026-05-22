@@ -84,6 +84,9 @@ object SessionManager {
     fun logout(context: Context) {
 
         token = null
+        isAdmin = false
+        distributorId = null
+        distributorName = null
 
         context.getSharedPreferences("auth", Context.MODE_PRIVATE)
             .edit()
