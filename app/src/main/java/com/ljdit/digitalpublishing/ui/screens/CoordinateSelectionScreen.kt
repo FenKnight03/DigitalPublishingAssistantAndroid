@@ -14,7 +14,7 @@ import androidx.navigation.NavController
 @Composable
 fun CoordinateSelectionScreen(
     photoId: String?,
-    distributorId: String?,
+    logoId: String?,
     navController: NavController
 ) {
 
@@ -39,7 +39,7 @@ fun CoordinateSelectionScreen(
                     Button(onClick = {
 
                         navController.navigate(
-                            "preview/$photoId/$distributorId/1"
+                            "preview/$photoId/$logoId/1"
                         )
 
                     }) {
@@ -49,7 +49,7 @@ fun CoordinateSelectionScreen(
                     Button(onClick = {
 
                         navController.navigate(
-                            "preview/$photoId/$distributorId/2"
+                            "preview/$photoId/$logoId/2"
                         )
 
                     }) {
@@ -59,7 +59,7 @@ fun CoordinateSelectionScreen(
                     Button(onClick = {
 
                         navController.navigate(
-                            "preview/$photoId/$distributorId/3"
+                            "preview/$photoId/$logoId/3"
                         )
 
                     }) {

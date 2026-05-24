@@ -121,14 +121,14 @@ class FusionViewModel : ViewModel() {
         }
     }
 
-    fun saveFusion(photoId: Int, distributorId: Int, coordinate: Int, caption: String) {
+    fun saveFusion(photoId: Int, logoId: Int, coordinate: Int, caption: String) {
         viewModelScope.launch {
             startProcessing("Guardando...")
 
             try {
                 val response = repository.saveFusion(
                     photoId = photoId,
-                    distributorId = distributorId,
+                    logoId = logoId,
                     coordinate = coordinate,
                     caption = caption
                 )
@@ -213,7 +213,12 @@ class FusionViewModel : ViewModel() {
                 } else {
                     val errorText = readPublishErrorBody(response)
                     logPublishResponse("publishFusion", response, errorText)
-                    _actionResult.value = errorText ?: "Error al publicar"
+                    _actionResult.value =
+                        if (response.code() == 401) {
+                            "Tu sesion expiro. Inicia sesion nuevamente."
+                        } else {
+                            errorText ?: "Error al publicar"
+                        }
                 }
             } catch (e: Exception) {
                 Log.e("PublishCrash", "Exception publicando fusion $fusionId", e)
@@ -232,7 +237,7 @@ class FusionViewModel : ViewModel() {
 
     fun saveAndPublish(
         photoId: Int,
-        distributorId: Int,
+        logoId: Int,
         coordinate: Int,
         caption: String,
         scheduledTime: Long? = null
@@ -250,7 +255,7 @@ class FusionViewModel : ViewModel() {
             try {
                 val saveResponse = repository.saveFusion(
                     photoId = photoId,
-                    distributorId = distributorId,
+                    logoId = logoId,
                     coordinate = coordinate,
                     caption = caption
                 )
@@ -294,7 +299,12 @@ class FusionViewModel : ViewModel() {
                 } else {
                     val errorText = readPublishErrorBody(publishResponse)
                     logPublishResponse("saveAndPublish", publishResponse, errorText)
-                    _actionResult.value = errorText ?: "Error al publicar"
+                    _actionResult.value =
+                        if (publishResponse.code() == 401) {
+                            "Tu sesion expiro. Inicia sesion nuevamente."
+                        } else {
+                            errorText ?: "Error al publicar"
+                        }
                 }
             } catch (e: Exception) {
                 Log.e("Publish", "Error publicando", e)

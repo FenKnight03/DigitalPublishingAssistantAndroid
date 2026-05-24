@@ -43,16 +43,16 @@ fun AppNavigation() {
             )
         }
 
-        composable("preview/{photoId}/{distributorId}/{coordinate}") { backStackEntry ->
+        composable("preview/{photoId}/{logoId}/{coordinate}") { backStackEntry ->
 
             val photoId = backStackEntry.arguments?.getString("photoId")
-            val distributorId = backStackEntry.arguments?.getString("distributorId")
+            val logoId = backStackEntry.arguments?.getString("logoId")
             val coordinate = backStackEntry.arguments?.getString("coordinate")
 
             FusionPreviewScreen(
                 navController = navController,
                 photoId = photoId,
-                distributorId = distributorId,
+                logoId = logoId,
                 coordinate = coordinate
             )
 

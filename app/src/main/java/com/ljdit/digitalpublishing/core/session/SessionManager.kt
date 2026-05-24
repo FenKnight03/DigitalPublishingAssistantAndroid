@@ -26,11 +26,17 @@ object SessionManager {
     var token: String? = null
         private set
 
+    private var appContext: Context? = null
+
     fun init(context: Context) {
+        appContext = context.applicationContext
 
         val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
 
-        token = prefs.getString(KEY, null)
+        token =
+            prefs.getString(KEY, null)
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
 
         isAdmin =
             prefs.getBoolean(KEY_IS_ADMIN, false)
@@ -59,14 +65,17 @@ object SessionManager {
         distributorNameValue: String?
     ) {
 
-        token = newToken
+        val cleanToken =
+            newToken.trim()
+
+        token = cleanToken
         isAdmin = isAdminValue
         distributorId = distributorIdValue
         distributorName = distributorNameValue
 
         context.getSharedPreferences("auth", Context.MODE_PRIVATE)
             .edit()
-            .putString(KEY, newToken)
+            .putString(KEY, cleanToken)
             .putBoolean(KEY_IS_ADMIN, isAdminValue)
             .putString(KEY_DISTRIBUTOR_NAME, distributorNameValue)
             .apply {
@@ -82,6 +91,22 @@ object SessionManager {
     }
 
     fun logout(context: Context) {
+        clearSession(context)
+    }
+
+    fun clearPersistedSession() {
+        appContext?.let {
+            clearSession(it)
+        } ?: run {
+            token = null
+            isAdmin = false
+            distributorId = null
+            distributorName = null
+            _isLoggedIn.value = false
+        }
+    }
+
+    private fun clearSession(context: Context) {
 
         token = null
         isAdmin = false

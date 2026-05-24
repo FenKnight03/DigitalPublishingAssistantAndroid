@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.size.Size
+import com.ljdit.digitalpublishing.model.Distributor
 import com.ljdit.digitalpublishing.model.Photo
 import com.ljdit.digitalpublishing.model.PhotoCoordinate
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
@@ -48,6 +49,36 @@ private fun PhotoCoordinate.yFraction(sourceHeight: Int?): Float? {
             y / sourceHeight.toFloat()
         else -> null
     }?.coerceIn(0f, 1f)
+}
+
+private data class LogoSelectionItem(
+    val logoId: Int,
+    val imageUrl: String,
+    val label: String
+)
+
+private fun Distributor.logoSelectionItems(): List<LogoSelectionItem> {
+    val expandedLogos = logos.mapIndexed { index, logo ->
+        LogoSelectionItem(
+            logoId = logo.id,
+            imageUrl = logo.imageUrl,
+            label = if (logos.size > 1) "${name} ${index + 1}" else name
+        )
+    }
+
+    if (expandedLogos.isNotEmpty()) {
+        return expandedLogos
+    }
+
+    return logoId?.let {
+        listOf(
+            LogoSelectionItem(
+                logoId = it,
+                imageUrl = logoUrl,
+                label = name
+            )
+        )
+    } ?: emptyList()
 }
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -84,7 +115,7 @@ fun PhotoViewerScreen(
 
                 val distributors by viewerViewModel.distributors.collectAsState()
                 val selectedCoordinate by viewerViewModel.selectedCoordinate.collectAsState()
-                val selectedDistributorId by viewerViewModel.selectedDistributorId.collectAsState()
+                val selectedLogoId by viewerViewModel.selectedLogoId.collectAsState()
                 val preview by viewerViewModel.preview.collectAsState()
                 val isLoading by viewerViewModel.isLoading.collectAsState()
 
@@ -284,7 +315,7 @@ fun PhotoViewerScreen(
                                             coordinate.id
                                         )
 
-                                        if (selectedDistributorId != null) {
+                                        if (selectedLogoId != null) {
 
                                             viewerViewModel.applyFusion()
                                         }
@@ -313,17 +344,19 @@ fun PhotoViewerScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 
-                        items(distributors) { distributor ->
+                        items(distributors.flatMap { it.logoSelectionItems() }) { logoItem ->
 
                             Card(
                                 modifier = Modifier
-                                    .width(100.dp)
-                                    .clickable {
-                                        viewerViewModel.selectDistributor(distributor.id)
-                                    },
+                        .width(100.dp)
+                        .clickable {
+                            viewerViewModel.selectLogo(
+                                logoItem.logoId
+                            )
+                        },
                                 colors = CardDefaults.cardColors(
                                     containerColor =
-                                        if (selectedDistributorId == distributor.id)
+                                        if (selectedLogoId == logoItem.logoId)
                                             MaterialTheme.colorScheme.primaryContainer
                                         else
                                             MaterialTheme.colorScheme.surface
@@ -336,7 +369,7 @@ fun PhotoViewerScreen(
                                 ) {
 
                                     AsyncImage(
-                                        model = distributor.logoUrl,
+                                        model = logoItem.imageUrl,
                                         contentDescription = null,
                                         modifier = Modifier.size(60.dp)
                                     )
@@ -344,7 +377,7 @@ fun PhotoViewerScreen(
                                     Spacer(modifier = Modifier.height(4.dp))
 
                                     Text(
-                                        text = distributor.name,
+                                        text = logoItem.label,
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -361,7 +394,7 @@ fun PhotoViewerScreen(
                         onClick = {
 
                             navController.navigate(
-                                "preview/${photo?.id}/${selectedDistributorId}/${selectedCoordinate}"
+                                "preview/${photo?.id}/${selectedLogoId}/${selectedCoordinate}"
                             )
                         },
                         enabled = preview?.ok == true && !isLoading,

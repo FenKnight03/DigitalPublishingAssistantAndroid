@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ljdit.digitalpublishing.core.session.SessionManager
@@ -38,11 +39,11 @@ class PhotoViewerViewModel : ViewModel() {
         _distributors
 
     // 🔹 Distribuidor seleccionado
-    private val _selectedDistributorId =
+    private val _selectedLogoId =
         MutableStateFlow<Int?>(null)
 
-    val selectedDistributorId: StateFlow<Int?> =
-        _selectedDistributorId
+    val selectedLogoId: StateFlow<Int?> =
+        _selectedLogoId
 
     // 🔹 Coordenada seleccionada
     private val _selectedCoordinate =
@@ -116,11 +117,11 @@ class PhotoViewerViewModel : ViewModel() {
         }
     }
 
-    // Seleccionar distribuidor
-    fun selectDistributor(distributorId: Int) {
+    // Seleccionar logo
+    fun selectLogo(logoId: Int) {
 
-        _selectedDistributorId.value =
-            distributorId
+        _selectedLogoId.value =
+            logoId
 
         _preview.value = null
     }
@@ -137,8 +138,8 @@ class PhotoViewerViewModel : ViewModel() {
     // Aplicar cambios
     fun applyFusion() {
 
-        val distributorId =
-            _selectedDistributorId.value ?: return
+        val logoId =
+            _selectedLogoId.value ?: return
 
         val coordinateId =
             _selectedCoordinate.value ?: return
@@ -155,10 +156,15 @@ class PhotoViewerViewModel : ViewModel() {
                     repository.createFusionPreview(
                         currentPhoto.id,
                         FusionPreviewRequest(
-                            logo_id = distributorId,
+                            logo_id = logoId,
                             coordenada = coordinateId
                         )
                     )
+
+                Log.d(
+                    "PhotoViewer",
+                    "Fusion preview code=${response.code()} body=${response.body()}"
+                )
 
                 if (
                     response.isSuccessful &&
@@ -166,9 +172,26 @@ class PhotoViewerViewModel : ViewModel() {
                 ) {
 
                     _preview.value = response.body()
+                } else {
+                    val errorText =
+                        try {
+                            response.errorBody()?.string()
+                        } catch (e: Exception) {
+                            "No se pudo leer error: ${e.message}"
+                        }
+
+                    Log.e(
+                        "PhotoViewer",
+                        "Fusion preview error=$errorText"
+                    )
+
+                    _errorMessage.value =
+                        errorText ?: "Error generando preview"
                 }
 
             } catch (e: Exception) {
+
+                Log.e("PhotoViewer", "Error generando preview", e)
 
                 _errorMessage.value =
                     "Error generando preview"

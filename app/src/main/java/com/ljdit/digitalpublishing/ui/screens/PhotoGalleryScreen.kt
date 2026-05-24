@@ -1,8 +1,5 @@
 package com.ljdit.digitalpublishing.ui.screens
 
-import android.R
-import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,9 +29,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ljdit.digitalpublishing.core.session.SessionManager
 import com.ljdit.digitalpublishing.ui.components.PhotoCard
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 
@@ -44,6 +42,8 @@ fun PhotoGalleryScreen(
     viewModel: PhotoViewModel = viewModel(),
     applyStatusBarPadding: Boolean = true
 ) {
+    val context = LocalContext.current
+
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
@@ -68,6 +68,17 @@ fun PhotoGalleryScreen(
                 viewModel.photos.collectAsState()
 
             Column {
+
+                Button(
+                    onClick = {
+                        SessionManager.logout(context)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text("Cerrar sesión")
+                }
 
                 Button(
                     onClick = {

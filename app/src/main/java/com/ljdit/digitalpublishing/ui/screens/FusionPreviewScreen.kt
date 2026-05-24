@@ -22,12 +22,15 @@ import androidx.compose.ui.graphics.Color.Companion.White
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun FusionPreviewScreen(
     navController: NavController,
     photoId: String? = null,
-    distributorId: String? = null,
+    logoId: String? = null,
     coordinate: String? = null,
     fusionId: String? = null,
     fromHistory: Boolean = false,
@@ -79,7 +82,7 @@ fun FusionPreviewScreen(
                     } else {
                         viewModel.generatePreview(
                             photoId?.toInt() ?: return@LaunchedEffect,
-                            distributorId?.toInt() ?: return@LaunchedEffect,
+                            logoId?.toInt() ?: return@LaunchedEffect,
                             coordinate?.toInt() ?: return@LaunchedEffect
                         )
                     }
@@ -128,11 +131,25 @@ fun FusionPreviewScreen(
                                 }
 
                                 else -> {
-                                    Image(
-                                        bitmap = bitmap.asImageBitmap(),
-                                        contentDescription = "Fusion preview",
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(320.dp)
+                                            .background(Color(0xFFF2F2F2))
+                                            .clip(RoundedCornerShape(16.dp))
+                                    ) {
+
+                                        Image(
+                                            bitmap = bitmap.asImageBitmap(),
+
+                                            contentDescription = "Fusion preview",
+
+                                            modifier = Modifier
+                                                .fillMaxSize(),
+
+                                            contentScale = ContentScale.Fit
+                                        )
+                                    }
                                 }
                             }
 
@@ -253,7 +270,7 @@ fun FusionPreviewScreen(
                                 onClick = {
                                     viewModel.saveFusion(
                                         photoId!!.toInt(),
-                                        distributorId!!.toInt(),
+                                        logoId!!.toInt(),
                                         coordinate!!.toInt(),
                                         caption
                                     )
@@ -270,7 +287,7 @@ fun FusionPreviewScreen(
                                 onClick = {
                                     viewModel.saveAndPublish(
                                         photoId = photoId!!.toInt(),
-                                        distributorId = distributorId!!.toInt(),
+                                        logoId = logoId!!.toInt(),
                                         coordinate = coordinate!!.toInt(),
                                         caption = caption,
                                         scheduledTime = scheduledTime
