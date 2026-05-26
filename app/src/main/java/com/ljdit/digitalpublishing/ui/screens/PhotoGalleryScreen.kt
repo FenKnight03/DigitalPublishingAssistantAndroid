@@ -24,7 +24,6 @@ import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -39,7 +38,6 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,7 +53,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.ljdit.digitalpublishing.core.ui.FusionActionCenter
 import com.ljdit.digitalpublishing.core.session.SessionManager
 import com.ljdit.digitalpublishing.model.Photo
 import com.ljdit.digitalpublishing.model.PhotoFilters
@@ -80,7 +77,6 @@ fun PhotoGalleryScreen(
     val allPhotos by viewModel.allPhotos.collectAsState()
     val filters by viewModel.filters.collectAsState()
     val suggestions by viewModel.searchSuggestions.collectAsState()
-    val fusionActionState by FusionActionCenter.state.collectAsState()
     var isShowingFilters by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -91,19 +87,6 @@ fun PhotoGalleryScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = GalleryCanvas
     ) { innerPadding ->
-        fusionActionState.result?.let { result ->
-            AlertDialog(
-                onDismissRequest = { FusionActionCenter.clearResult() },
-                title = { Text("Resultado") },
-                text = { Text(result) },
-                confirmButton = {
-                    TextButton(onClick = { FusionActionCenter.clearResult() }) {
-                        Text("OK")
-                    }
-                }
-            )
-        }
-
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)

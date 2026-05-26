@@ -47,7 +47,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.ljdit.digitalpublishing.core.ui.FusionActionCenter
 import com.ljdit.digitalpublishing.viewmodel.FusionViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -66,7 +65,8 @@ fun FusionPreviewScreen(
     val preview by viewModel.preview.collectAsState()
     val savedFusionId by viewModel.savedFusionId.collectAsState()
     val isProcessingPreview by viewModel.isProcessing.collectAsState()
-    val fusionActionState by FusionActionCenter.state.collectAsState()
+    val processingMessage by viewModel.processingMessage.collectAsState()
+    val actionResult by viewModel.actionResult.collectAsState()
 
     var caption by remember { mutableStateOf("") }
     var captionError by remember { mutableStateOf<String?>(null) }
@@ -117,194 +117,243 @@ fun FusionPreviewScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color(0xFFF2F4F8)
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(innerPadding)
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .fillMaxSize()
-                .background(Color(0xFFF2F4F8))
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            PreviewCard {
-                Text(
-                    text = "Revisa antes de enviar",
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Ajusta el caption, programa si hace falta y guarda la fusion para continuar despues.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
-                )
-            }
-
-            PreviewImageCard(base64 = preview?.data?.image)
-
-            PreviewCard {
-                Text(
-                    text = "Caption",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = caption,
-                    onValueChange = {
-                        caption = it
-                        captionError = null
-                    },
-                    label = { Text("Texto de publicacion") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(130.dp),
-                    isError = captionError != null,
-                    supportingText = {
-                        captionError?.let { Text(it) }
-                    }
-                )
-            }
-
-            PreviewCard {
-                Text(
-                    text = "Programacion",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        DatePickerDialog(
-                            navController.context,
-                            { _, year, month, dayOfMonth ->
-                                calendar.set(Calendar.YEAR, year)
-                                calendar.set(Calendar.MONTH, month)
-                                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
-
-                                TimePickerDialog(
-                                    navController.context,
-                                    { _, hour, minute ->
-                                        calendar.set(Calendar.HOUR_OF_DAY, hour)
-                                        calendar.set(Calendar.MINUTE, minute)
-
-                                        scheduledTime = calendar.timeInMillis
-                                        scheduledDateText = SimpleDateFormat(
-                                            "dd/MM/yyyy HH:mm",
-                                            Locale.getDefault()
-                                        ).format(calendar.time)
-                                    },
-                                    calendar.get(Calendar.HOUR_OF_DAY),
-                                    calendar.get(Calendar.MINUTE),
-                                    true
-                                ).show()
-                            },
-                            calendar.get(Calendar.YEAR),
-                            calendar.get(Calendar.MONTH),
-                            calendar.get(Calendar.DAY_OF_MONTH)
-                        ).show()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF2F4F8))
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                PreviewCard {
                     Text(
-                        if (scheduledDateText.isBlank()) {
-                            "Seleccionar fecha"
-                        } else {
-                            scheduledDateText
+                        text = "Revisa antes de enviar",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "Ajusta el caption, programa si hace falta y guarda la fusion para continuar despues.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+
+                PreviewImageCard(base64 = preview?.data?.image)
+
+                PreviewCard {
+                    Text(
+                        text = "Caption",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedTextField(
+                        value = caption,
+                        onValueChange = {
+                            caption = it
+                            captionError = null
+                        },
+                        label = { Text("Texto de publicacion") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp),
+                        isError = captionError != null,
+                        supportingText = {
+                            captionError?.let { Text(it) }
                         }
                     )
                 }
 
-                TextButton(
-                    onClick = {
-                        scheduledTime = null
-                        scheduledDateText = ""
-                    }
-                ) {
-                    Text("Quitar programacion")
-                }
-            }
-
-            PreviewCard {
-                val actionsEnabled =
-                    !isProcessingPreview && !fusionActionState.isProcessing
-
-                if (!fromHistory) {
-                    Button(
-                        onClick = {
-                            val cleanCaption = captionOrShowError() ?: return@Button
-
-                            FusionActionCenter.saveFusion(
-                                photoId = photoId!!.toInt(),
-                                logoId = logoId!!.toInt(),
-                                coordinate = coordinate!!.toInt(),
-                                caption = cleanCaption
-                            )
-
-                            navigateToGallery()
-                        },
-                        enabled = actionsEnabled,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Guardar")
-                    }
+                PreviewCard {
+                    Text(
+                        text = "Programacion",
+                        style = MaterialTheme.typography.titleMedium
+                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(
+                    OutlinedButton(
                         onClick = {
-                            val cleanCaption = captionOrShowError() ?: return@Button
+                            DatePickerDialog(
+                                navController.context,
+                                { _, year, month, dayOfMonth ->
+                                    calendar.set(Calendar.YEAR, year)
+                                    calendar.set(Calendar.MONTH, month)
+                                    calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
 
-                            FusionActionCenter.saveAndPublish(
-                                photoId = photoId!!.toInt(),
-                                logoId = logoId!!.toInt(),
-                                coordinate = coordinate!!.toInt(),
-                                caption = cleanCaption,
-                                scheduledTime = scheduledTime
-                            )
+                                    TimePickerDialog(
+                                        navController.context,
+                                        { _, hour, minute ->
+                                            calendar.set(Calendar.HOUR_OF_DAY, hour)
+                                            calendar.set(Calendar.MINUTE, minute)
 
-                            navigateToGallery()
+                                            scheduledTime = calendar.timeInMillis
+                                            scheduledDateText = SimpleDateFormat(
+                                                "dd/MM/yyyy HH:mm",
+                                                Locale.getDefault()
+                                            ).format(calendar.time)
+                                        },
+                                        calendar.get(Calendar.HOUR_OF_DAY),
+                                        calendar.get(Calendar.MINUTE),
+                                        true
+                                    ).show()
+                                },
+                                calendar.get(Calendar.YEAR),
+                                calendar.get(Calendar.MONTH),
+                                calendar.get(Calendar.DAY_OF_MONTH)
+                            ).show()
                         },
-                        enabled = actionsEnabled,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            if (scheduledTime == null) {
-                                "Guardar y publicar"
+                            if (scheduledDateText.isBlank()) {
+                                "Seleccionar fecha"
                             } else {
-                                "Guardar y programar"
+                                scheduledDateText
                             }
                         )
                     }
-                } else {
-                    Button(
-                        onClick = {
-                            val cleanCaption = captionOrShowError() ?: return@Button
 
-                            finalFusionId?.let {
-                                FusionActionCenter.publishFusion(
-                                    fusionId = it,
+                    TextButton(
+                        onClick = {
+                            scheduledTime = null
+                            scheduledDateText = ""
+                        }
+                    ) {
+                        Text("Quitar programacion")
+                    }
+                }
+
+                PreviewCard {
+                    val actionsEnabled = !isProcessingPreview
+
+                    if (!fromHistory) {
+                        Button(
+                            onClick = {
+                                val cleanCaption = captionOrShowError() ?: return@Button
+
+                                viewModel.saveFusion(
+                                    photoId = photoId!!.toInt(),
+                                    logoId = logoId!!.toInt(),
+                                    coordinate = coordinate!!.toInt(),
+                                    caption = cleanCaption
+                                )
+                            },
+                            enabled = actionsEnabled,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Guardar")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = {
+                                val cleanCaption = captionOrShowError() ?: return@Button
+
+                                viewModel.saveAndPublish(
+                                    photoId = photoId!!.toInt(),
+                                    logoId = logoId!!.toInt(),
+                                    coordinate = coordinate!!.toInt(),
                                     caption = cleanCaption,
                                     scheduledTime = scheduledTime
                                 )
-                            }
+                            },
+                            enabled = actionsEnabled,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                if (scheduledTime == null) {
+                                    "Guardar y publicar"
+                                } else {
+                                    "Guardar y programar"
+                                }
+                            )
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                val cleanCaption = captionOrShowError() ?: return@Button
 
-                            navigateToGallery()
-                        },
-                        enabled = actionsEnabled,
-                        modifier = Modifier.fillMaxWidth()
+                                finalFusionId?.let {
+                                    viewModel.publishFusion(
+                                        fusionId = it,
+                                        caption = cleanCaption,
+                                        scheduledTime = scheduledTime
+                                    )
+                                }
+                            },
+                            enabled = actionsEnabled,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                if (scheduledTime == null) {
+                                    "Publicar"
+                                } else {
+                                    "Programar"
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (isProcessingPreview || actionResult != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.50f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth(0.86f),
+                        color = White,
+                        shape = RoundedCornerShape(22.dp),
+                        shadowElevation = 10.dp
                     ) {
-                        Text(
-                            if (scheduledTime == null) {
-                                "Publicar"
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (isProcessingPreview) {
+                                CircularProgressIndicator()
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                Text(
+                                    text = processingMessage ?: "Procesando...",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
                             } else {
-                                "Programar"
+                                Text(
+                                    text = actionResult.orEmpty(),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Button(
+                                    onClick = {
+                                        viewModel.clearActionResult()
+                                        navigateToGallery()
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("OK")
+                                }
                             }
-                        )
+                        }
                     }
                 }
             }
