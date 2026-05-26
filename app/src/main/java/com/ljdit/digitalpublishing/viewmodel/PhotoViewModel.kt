@@ -16,6 +16,9 @@ class PhotoViewModel : ViewModel() {
     private val _allPhotos =
         MutableStateFlow<List<Photo>>(emptyList())
 
+    val allPhotos: StateFlow<List<Photo>>
+        = _allPhotos
+
     private val _photos =
         MutableStateFlow<List<Photo>>(emptyList())
 

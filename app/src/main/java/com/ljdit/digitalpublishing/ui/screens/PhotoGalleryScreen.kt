@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,11 +19,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Collections
 import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,6 +38,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ljdit.digitalpublishing.core.session.SessionManager
 import com.ljdit.digitalpublishing.model.Photo
+import com.ljdit.digitalpublishing.model.PhotoFilters
 import com.ljdit.digitalpublishing.ui.components.PhotoCard
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 
@@ -57,6 +70,10 @@ fun PhotoGalleryScreen(
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val photos by viewModel.photos.collectAsState()
+    val allPhotos by viewModel.allPhotos.collectAsState()
+    val filters by viewModel.filters.collectAsState()
+    val suggestions by viewModel.searchSuggestions.collectAsState()
+    var isShowingFilters by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadPhotos()
@@ -88,13 +105,46 @@ fun PhotoGalleryScreen(
         ) {
             item {
                 GalleryTopBar(
-                    onFiltersClick = { navController.navigate("filters") },
+                    onFiltersClick = { isShowingFilters = !isShowingFilters },
                     onLogoutClick = { SessionManager.logout(context) }
                 )
             }
 
             item {
-                GallerySummary(totalPhotos = photos.size)
+                GallerySummary(
+                    totalPhotos = allPhotos.size,
+                    visiblePhotos = photos.size,
+                    activeFilters = filters.activeCount()
+                )
+            }
+
+            item {
+                FilterHeader(
+                    visiblePhotos = photos.size,
+                    activeFilters = filters.activeCount(),
+                    isShowingFilters = isShowingFilters,
+                    onClick = { isShowingFilters = !isShowingFilters }
+                )
+            }
+
+            if (isShowingFilters) {
+                item {
+                    GalleryFilterPanel(
+                        filters = filters,
+                        suggestions = suggestions,
+                        availableOrigins = allPhotos.availableOrigins(),
+                        onSearchChanged = viewModel::updateSearchSuggestions,
+                        onApply = { nextFilters ->
+                            viewModel.applyFilters(nextFilters)
+                            isShowingFilters = false
+                        },
+                        onClear = {
+                            viewModel.applyFilters(PhotoFilters())
+                            viewModel.updateSearchSuggestions("")
+                            isShowingFilters = false
+                        }
+                    )
+                }
             }
 
             if (photos.isEmpty()) {
@@ -187,7 +237,11 @@ private fun GalleryIconButton(
 }
 
 @Composable
-private fun GallerySummary(totalPhotos: Int) {
+private fun GallerySummary(
+    totalPhotos: Int,
+    visiblePhotos: Int,
+    activeFilters: Int
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = GalleryElevated,
@@ -221,6 +275,14 @@ private fun GallerySummary(totalPhotos: Int) {
                     icon = Icons.Rounded.Collections,
                     tint = GallerySoftInk
                 )
+
+                if (activeFilters > 0) {
+                    StatusPill(
+                        text = "$visiblePhotos visibles",
+                        icon = Icons.Rounded.Check,
+                        tint = GalleryBrand
+                    )
+                }
             }
 
             Box(
@@ -236,6 +298,297 @@ private fun GallerySummary(totalPhotos: Int) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun FilterHeader(
+    visiblePhotos: Int,
+    activeFilters: Int,
+    isShowingFilters: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            onClick = onClick,
+            color = GalleryElevated,
+            shape = RoundedCornerShape(50),
+            shadowElevation = 2.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Tune,
+                    contentDescription = null,
+                    tint = GalleryBrand
+                )
+
+                Text(
+                    text = if (isShowingFilters) "Ocultar filtros" else "Filtros",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GalleryInk
+                )
+            }
+        }
+
+        if (activeFilters > 0) {
+            Spacer(modifier = Modifier.width(10.dp))
+            StatusPill(
+                text = "$activeFilters activos",
+                icon = Icons.Rounded.Check,
+                tint = GalleryBrand
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            text = "$visiblePhotos fotos",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = GallerySoftInk
+        )
+    }
+}
+
+@Composable
+private fun GalleryFilterPanel(
+    filters: PhotoFilters,
+    suggestions: List<String>,
+    availableOrigins: List<String>,
+    onSearchChanged: (String) -> Unit,
+    onApply: (PhotoFilters) -> Unit,
+    onClear: () -> Unit
+) {
+    val formatos = remember(filters.formatos) {
+        mutableStateListOf<String>().apply { addAll(filters.formatos) }
+    }
+    val origenes = remember(filters.origenes, availableOrigins) {
+        mutableStateListOf<String>().apply {
+            addAll(filters.origenes.filter { it in availableOrigins })
+        }
+    }
+    val contenidos = remember(filters.contenidos) {
+        mutableStateListOf<String>().apply { addAll(filters.contenidos) }
+    }
+    var orden by remember(filters.orden) { mutableStateOf(filters.orden) }
+    var busqueda by remember(filters.busqueda) { mutableStateOf(filters.busqueda) }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = GalleryElevated,
+        shape = RoundedCornerShape(22.dp),
+        shadowElevation = 5.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            FilterTextField(
+                value = busqueda,
+                onValueChange = {
+                    busqueda = it
+                    onSearchChanged(it)
+                },
+                suggestions = suggestions,
+                onSuggestionClick = {
+                    busqueda = it
+                    onSearchChanged("")
+                }
+            )
+
+            FilterGroup(title = "Formato") {
+                listOf(
+                    "horizontal" to "Horizontal",
+                    "cuadrado" to "Cuadrado",
+                    "semivertical" to "Semivertical",
+                    "vertical" to "Vertical"
+                ).forEach { (value, label) ->
+                    FilterCheckbox(
+                        label = label,
+                        checked = formatos.contains(value),
+                        onCheckedChange = { checked ->
+                            if (checked) formatos.add(value) else formatos.remove(value)
+                        }
+                    )
+                }
+            }
+
+            FilterGroup(title = "Contenido") {
+                listOf(
+                    "solo" to "Solo",
+                    "en_uso" to "En uso"
+                ).forEach { (value, label) ->
+                    FilterCheckbox(
+                        label = label,
+                        checked = contenidos.contains(value),
+                        onCheckedChange = { checked ->
+                            if (checked) contenidos.add(value) else contenidos.remove(value)
+                        }
+                    )
+                }
+            }
+
+            FilterGroup(title = "Orden") {
+                FilterRadio(
+                    label = "Mas recientes",
+                    selected = orden == "recientes",
+                    onClick = { orden = "recientes" }
+                )
+                FilterRadio(
+                    label = "Mas antiguas",
+                    selected = orden == "antiguas",
+                    onClick = { orden = "antiguas" }
+                )
+            }
+
+            FilterGroup(title = "Origen") {
+                if (availableOrigins.isEmpty()) {
+                    Text(
+                        text = "Sin paises disponibles",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = GallerySoftInk
+                    )
+                } else {
+                    availableOrigins.forEach { value ->
+                        FilterCheckbox(
+                            label = value.replaceFirstChar { it.titlecase() },
+                            checked = origenes.contains(value),
+                            onCheckedChange = { checked ->
+                                if (checked) origenes.add(value) else origenes.remove(value)
+                            }
+                        )
+                    }
+                }
+            }
+
+            Button(
+                onClick = {
+                    onApply(
+                        PhotoFilters(
+                            formatos = formatos.toSet(),
+                            origenes = origenes.toSet(),
+                            contenidos = contenidos.toSet(),
+                            orden = orden,
+                            busqueda = busqueda
+                        )
+                    )
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Aplicar filtros")
+            }
+
+            OutlinedButton(
+                onClick = onClear,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Limpiar filtros")
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    suggestions: List<String>,
+    onSuggestionClick: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = null,
+                    tint = GalleryBrand
+                )
+            },
+            label = { Text("Buscar producto") },
+            placeholder = { Text("Ej: B420H") },
+            singleLine = true
+        )
+
+        if (suggestions.isNotEmpty() && value.isNotBlank()) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                suggestions.forEach { suggestion ->
+                    OutlinedButton(
+                        onClick = { onSuggestionClick(suggestion) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(suggestion)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterGroup(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = GalleryInk
+        )
+
+        Column(content = content)
+    }
+}
+
+@Composable
+private fun FilterCheckbox(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = GalleryInk
+        )
+    }
+}
+
+@Composable
+private fun FilterRadio(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(
+            selected = selected,
+            onClick = onClick
+        )
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = GalleryInk
+        )
     }
 }
 
@@ -416,4 +769,25 @@ private fun Photo.galleryFormat(): GalleryPhotoFormat {
         ratio >= 0.72f -> GalleryPhotoFormat.SemiVertical
         else -> GalleryPhotoFormat.Vertical
     }
+}
+
+private fun PhotoFilters.activeCount(): Int {
+    var count = 0
+    if (formatos.isNotEmpty()) count++
+    if (origenes.isNotEmpty()) count++
+    if (contenidos.isNotEmpty()) count++
+    if (orden != "recientes") count++
+    if (busqueda.isNotBlank()) count++
+    return count
+}
+
+private fun List<Photo>.availableOrigins(): List<String> {
+    return mapNotNull { photo ->
+        photo.origen
+            ?.trim()
+            ?.lowercase()
+            ?.takeIf { it.isNotBlank() }
+    }
+        .distinct()
+        .sorted()
 }

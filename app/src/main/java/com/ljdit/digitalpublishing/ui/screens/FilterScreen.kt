@@ -31,6 +31,19 @@ fun FilterScreen(
             ) {
 
                 val currentFilters by viewModel.filters.collectAsState()
+                val allPhotos by viewModel.allPhotos.collectAsState()
+                val availableOrigins =
+                    remember(allPhotos) {
+                        allPhotos
+                            .mapNotNull { photo ->
+                                photo.origen
+                                    ?.trim()
+                                    ?.lowercase()
+                                    ?.takeIf { it.isNotBlank() }
+                            }
+                            .distinct()
+                            .sorted()
+                    }
 
                 val formatos =
                     remember(currentFilters.formatos) {
@@ -253,15 +266,7 @@ fun FilterScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    listOf(
-                        "mexico",
-                        "colombia",
-                        "ecuador",
-                        "argentina",
-                        "chile",
-                        "paraguay",
-                        "uruguay"
-                    ).forEach { value ->
+                    availableOrigins.forEach { value ->
 
                         FilterCheckbox(
                             label = value,
