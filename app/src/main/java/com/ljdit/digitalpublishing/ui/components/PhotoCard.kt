@@ -77,11 +77,11 @@ fun PhotoCard(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFFEDEFF5))
+                            .background(Color(0xFFF3F3F6))
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.Center),
-                            color = Color(0xFF1F65D6)
+                            color = Color(0xFFD1143A)
                         )
                     }
                 }
@@ -90,7 +90,7 @@ fun PhotoCard(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFFEDEFF5))
+                            .background(Color(0xFFF3F3F6))
                     ) {
                         Text(
                             text = "Error",

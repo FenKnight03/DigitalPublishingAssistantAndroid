@@ -25,12 +25,16 @@ import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -55,12 +59,12 @@ import com.ljdit.digitalpublishing.model.PhotoFilters
 import com.ljdit.digitalpublishing.ui.components.PhotoCard
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 
-private val GalleryBrand = Color(0xFF1F65D6)
+private val GalleryBrand = Color(0xFFD1143A)
 private val GalleryInk = Color(0xFF141418)
 private val GallerySoftInk = Color(0xFF5D6675)
 private val GalleryCanvas = Color(0xFFF2F4F8)
 private val GalleryElevated = Color.White
-private val GalleryField = Color(0xFFEAF0FA)
+private val GalleryField = Color(0xFFF3F3F6)
 
 @Composable
 fun PhotoGalleryScreen(
@@ -105,7 +109,6 @@ fun PhotoGalleryScreen(
         ) {
             item {
                 GalleryTopBar(
-                    onFiltersClick = { isShowingFilters = !isShowingFilters },
                     onLogoutClick = { SessionManager.logout(context) }
                 )
             }
@@ -170,7 +173,6 @@ fun PhotoGalleryScreen(
 
 @Composable
 private fun GalleryTopBar(
-    onFiltersClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     Row(
@@ -192,14 +194,6 @@ private fun GalleryTopBar(
                 color = GallerySoftInk
             )
         }
-
-        GalleryIconButton(
-            icon = Icons.Rounded.Tune,
-            contentDescription = "Filtros",
-            onClick = onFiltersClick
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
 
         GalleryIconButton(
             icon = Icons.Rounded.Logout,
@@ -246,7 +240,7 @@ private fun GallerySummary(
         modifier = Modifier.fillMaxWidth(),
         color = GalleryElevated,
         shape = RoundedCornerShape(22.dp),
-        shadowElevation = 5.dp
+        shadowElevation = 4.dp
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -384,12 +378,12 @@ private fun GalleryFilterPanel(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = GalleryElevated,
-        shape = RoundedCornerShape(22.dp),
-        shadowElevation = 5.dp
+        shape = RoundedCornerShape(24.dp),
+        shadowElevation = 6.dp
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             FilterTextField(
                 value = busqueda,
@@ -481,14 +475,23 @@ private fun GalleryFilterPanel(
                         )
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GalleryBrand,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text("Aplicar filtros")
             }
 
             OutlinedButton(
                 onClick = onClear,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = GalleryBrand
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text("Limpiar filtros")
             }
@@ -517,7 +520,16 @@ private fun FilterTextField(
             },
             label = { Text("Buscar producto") },
             placeholder = { Text("Ej: B420H") },
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GalleryBrand.copy(alpha = 0.45f),
+                focusedLabelColor = GalleryBrand,
+                cursorColor = GalleryBrand,
+                focusedContainerColor = GalleryField,
+                unfocusedContainerColor = GalleryField,
+                unfocusedBorderColor = Color.Transparent
+            )
         )
 
         if (suggestions.isNotEmpty() && value.isNotBlank()) {
@@ -525,7 +537,11 @@ private fun FilterTextField(
                 suggestions.forEach { suggestion ->
                     OutlinedButton(
                         onClick = { onSuggestionClick(suggestion) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = GalleryBrand
+                        ),
+                        shape = RoundedCornerShape(14.dp)
                     ) {
                         Text(suggestion)
                     }
@@ -543,12 +559,18 @@ private fun FilterGroup(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
-            color = GalleryInk
+            color = GallerySoftInk
         )
 
-        Column(content = content)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(GalleryField, RoundedCornerShape(16.dp))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            content = content
+        )
     }
 }
 
@@ -561,7 +583,11 @@ private fun FilterCheckbox(
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = checked,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = GalleryBrand,
+                checkmarkColor = Color.White
+            )
         )
 
         Text(
@@ -581,7 +607,10 @@ private fun FilterRadio(
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(
             selected = selected,
-            onClick = onClick
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = GalleryBrand
+            )
         )
 
         Text(

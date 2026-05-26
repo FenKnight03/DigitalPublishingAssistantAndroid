@@ -57,8 +57,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ljdit.digitalpublishing.viewmodel.AuthViewModel
 
-private val LoginBrand = Color(0xFF143DD1)
-private val LoginBrandDark = Color(0xFF088185)
+private val LoginBrand = Color(0xFFD1143A)
+private val LoginBrandDark = Color(0xFF8F0F1F)
 private val LoginInk = Color(0xFF141418)
 private val LoginCanvas = Color(0xFFF2F2F7)
 private val LoginElevated = Color(0xFFFFFFFF)
