@@ -168,24 +168,19 @@ fun FusionItemView(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    StatusPill(
-                        text = fusion.formato ?: "N/A",
-                        tint = HistorySoftInk
-                    )
+                StatusPill(
+                    text = fusion.formato ?: "N/A",
+                    tint = HistorySoftInk
+                )
 
-                    Text(
-                        text = fusion.fecha_publicacion.formattedPublicationDate(),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = HistorySoftInk,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                Text(
+                    text = fusion.fecha_publicacion.formattedPublicationDate(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = HistorySoftInk,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
             if (isActionable) {

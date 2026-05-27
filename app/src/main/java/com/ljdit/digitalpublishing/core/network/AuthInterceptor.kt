@@ -25,13 +25,6 @@ class AuthInterceptor : Interceptor {
             request
         }
 
-        val response =
-            chain.proceed(newRequest)
-
-        if (response.code == 401) {
-            SessionManager.clearPersistedSession()
-        }
-
-        return response
+        return chain.proceed(newRequest)
     }
 }

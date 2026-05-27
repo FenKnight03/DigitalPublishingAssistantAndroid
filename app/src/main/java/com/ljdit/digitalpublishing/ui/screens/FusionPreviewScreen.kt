@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ljdit.digitalpublishing.core.ui.FusionActionCenter
 import com.ljdit.digitalpublishing.viewmodel.FusionViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -65,8 +66,7 @@ fun FusionPreviewScreen(
     val preview by viewModel.preview.collectAsState()
     val savedFusionId by viewModel.savedFusionId.collectAsState()
     val isProcessingPreview by viewModel.isProcessing.collectAsState()
-    val processingMessage by viewModel.processingMessage.collectAsState()
-    val actionResult by viewModel.actionResult.collectAsState()
+    val fusionActionState by FusionActionCenter.state.collectAsState()
 
     var caption by remember { mutableStateOf("") }
     var captionError by remember { mutableStateOf<String?>(null) }
@@ -234,19 +234,22 @@ fun FusionPreviewScreen(
                 }
 
                 PreviewCard {
-                    val actionsEnabled = !isProcessingPreview
+                    val actionsEnabled =
+                        !isProcessingPreview && !fusionActionState.isProcessing
 
                     if (!fromHistory) {
                         Button(
                             onClick = {
                                 val cleanCaption = captionOrShowError() ?: return@Button
 
-                                viewModel.saveFusion(
+                                FusionActionCenter.saveFusion(
                                     photoId = photoId!!.toInt(),
                                     logoId = logoId!!.toInt(),
                                     coordinate = coordinate!!.toInt(),
                                     caption = cleanCaption
                                 )
+
+                                navigateToGallery()
                             },
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth()
@@ -260,13 +263,15 @@ fun FusionPreviewScreen(
                             onClick = {
                                 val cleanCaption = captionOrShowError() ?: return@Button
 
-                                viewModel.saveAndPublish(
+                                FusionActionCenter.saveAndPublish(
                                     photoId = photoId!!.toInt(),
                                     logoId = logoId!!.toInt(),
                                     coordinate = coordinate!!.toInt(),
                                     caption = cleanCaption,
                                     scheduledTime = scheduledTime
                                 )
+
+                                navigateToGallery()
                             },
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth()
@@ -285,12 +290,14 @@ fun FusionPreviewScreen(
                                 val cleanCaption = captionOrShowError() ?: return@Button
 
                                 finalFusionId?.let {
-                                    viewModel.publishFusion(
+                                    FusionActionCenter.publishFusion(
                                         fusionId = it,
                                         caption = cleanCaption,
                                         scheduledTime = scheduledTime
                                     )
                                 }
+
+                                navigateToGallery()
                             },
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth()
@@ -307,56 +314,6 @@ fun FusionPreviewScreen(
                 }
             }
 
-            if (isProcessingPreview || actionResult != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.50f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth(0.86f),
-                        color = White,
-                        shape = RoundedCornerShape(22.dp),
-                        shadowElevation = 10.dp
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            if (isProcessingPreview) {
-                                CircularProgressIndicator()
-
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                Text(
-                                    text = processingMessage ?: "Procesando...",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            } else {
-                                Text(
-                                    text = actionResult.orEmpty(),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                Button(
-                                    onClick = {
-                                        viewModel.clearActionResult()
-                                        navigateToGallery()
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("OK")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
