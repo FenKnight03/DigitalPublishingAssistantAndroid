@@ -12,6 +12,9 @@ object RetrofitClient {
 
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(AuthInterceptor())
+        .connectTimeout(90, TimeUnit.SECONDS)
+        .readTimeout(90, TimeUnit.SECONDS)
+        .writeTimeout(90, TimeUnit.SECONDS)
         .build()
 
     private val retrofit = Retrofit.Builder()
@@ -25,12 +28,5 @@ object RetrofitClient {
 
     val authApi: AuthApi =
         retrofit.create(AuthApi::class.java)
-
-    val client = OkHttpClient.Builder()
-        .addInterceptor(AuthInterceptor())
-        .connectTimeout(90, TimeUnit.SECONDS)
-        .readTimeout(90, TimeUnit.SECONDS)
-        .writeTimeout(90, TimeUnit.SECONDS)
-        .build()
 
 }

@@ -181,6 +181,10 @@ object FusionActionCenter {
         message: String,
         action: suspend () -> ActionResult
     ) {
+        if (_state.value.isProcessing) {
+            return
+        }
+
         _state.value = FusionActionState(
             isProcessing = true,
             title = title,

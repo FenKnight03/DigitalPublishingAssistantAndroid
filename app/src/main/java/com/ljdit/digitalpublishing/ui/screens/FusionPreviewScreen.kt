@@ -64,8 +64,7 @@ fun FusionPreviewScreen(
     viewModel: FusionViewModel = viewModel()
 ) {
     val preview by viewModel.preview.collectAsState()
-    val savedFusionId by viewModel.savedFusionId.collectAsState()
-    val isProcessingPreview by viewModel.isProcessing.collectAsState()
+    val isLoadingPreview by viewModel.isLoading.collectAsState()
     val fusionActionState by FusionActionCenter.state.collectAsState()
 
     var caption by remember { mutableStateOf("") }
@@ -92,7 +91,6 @@ fun FusionPreviewScreen(
     val calendar = remember { Calendar.getInstance() }
     var scheduledTime by remember { mutableStateOf<Long?>(null) }
     var scheduledDateText by remember { mutableStateOf("") }
-    val finalFusionId = if (fromHistory) fusionId?.toIntOrNull() else savedFusionId
 
     fun captionOrShowError(): String? {
         val cleanCaption = caption.trim()
@@ -235,7 +233,7 @@ fun FusionPreviewScreen(
 
                 PreviewCard {
                     val actionsEnabled =
-                        !isProcessingPreview && !fusionActionState.isProcessing
+                        !isLoadingPreview && !fusionActionState.isProcessing
 
                     if (!fromHistory) {
                         Button(
@@ -289,7 +287,7 @@ fun FusionPreviewScreen(
                             onClick = {
                                 val cleanCaption = captionOrShowError() ?: return@Button
 
-                                finalFusionId?.let {
+                                fusionId?.toIntOrNull()?.let {
                                     FusionActionCenter.publishFusion(
                                         fusionId = it,
                                         caption = cleanCaption,
