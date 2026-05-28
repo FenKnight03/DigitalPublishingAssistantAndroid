@@ -105,8 +105,8 @@ fun FusionPreviewScreen(
     }
 
     fun navigateToGallery() {
-        navController.navigate("home/0") {
-            popUpTo("home") {
+        navController.navigate("home") {
+            popUpTo(navController.graph.id) {
                 inclusive = true
             }
             launchSingleTop = true

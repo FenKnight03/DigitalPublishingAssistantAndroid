@@ -1,6 +1,7 @@
 package com.ljdit.digitalpublishing.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import com.ljdit.digitalpublishing.ui.screens.*
@@ -37,10 +38,14 @@ fun AppNavigation() {
         }
 
         composable("gallery") {
-            PhotoGalleryScreen(
-                navController = navController,
-                viewModel = photoViewModel
-            )
+            LaunchedEffect(Unit) {
+                navController.navigate("home") {
+                    popUpTo(navController.graph.id) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
+            }
         }
 
         composable("preview/{photoId}/{logoId}/{coordinate}") { backStackEntry ->
