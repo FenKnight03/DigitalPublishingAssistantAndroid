@@ -2,46 +2,30 @@ package com.ljdit.digitalpublishing.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.ljdit.digitalpublishing.core.ui.FusionActionCenter
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 
 private val NavigationBrand = Color(0xFFD1143A)
@@ -67,8 +51,6 @@ fun MainTabsScreen(
     LaunchedEffect(initialTab) {
         selectedTab = initialTab.coerceIn(tabs.indices)
     }
-
-    val fusionActionState by FusionActionCenter.state.collectAsState()
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -128,73 +110,6 @@ fun MainTabsScreen(
             }
         }
 
-        if (fusionActionState.isProcessing) {
-            PublishingActivityBanner(
-                title = fusionActionState.title ?: "Procesando",
-                message = fusionActionState.message ?: "Puedes seguir navegando."
-            )
-        }
-
-        if (fusionActionState.resultTitle != null) {
-            AlertDialog(
-                onDismissRequest = {},
-                title = { Text(fusionActionState.resultTitle.orEmpty()) },
-                text = { Text(fusionActionState.resultMessage.orEmpty()) },
-                confirmButton = {
-                    TextButton(onClick = { FusionActionCenter.dismissResult() }) {
-                        Text("OK")
-                    }
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun PublishingActivityBanner(
-    title: String,
-    message: String
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 30.dp),
-        color = Color.White,
-        shape = RoundedCornerShape(18.dp),
-        shadowElevation = 10.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape),
-                color = NavigationBrand,
-                strokeWidth = 3.dp
-            )
-
-            Column(
-                modifier = Modifier
-                    .padding(start = 12.dp)
-                    .weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = NavigationInk
-                )
-
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = NavigationInk.copy(alpha = 0.62f)
-                )
-            }
-        }
     }
 }
 
