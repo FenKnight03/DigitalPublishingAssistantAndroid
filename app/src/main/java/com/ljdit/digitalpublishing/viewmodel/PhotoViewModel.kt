@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ljdit.digitalpublishing.data.repository.PhotoRepository
@@ -31,29 +32,62 @@ class PhotoViewModel : ViewModel() {
     val filters: StateFlow<PhotoFilters>
         = _filters
 
-    fun loadPhotos() {
+    private val _isLoading =
+        MutableStateFlow(false)
+
+    val isLoading: StateFlow<Boolean>
+        = _isLoading
+
+    private var hasLoadedPhotos = false
+
+    fun loadPhotos(forceRefresh: Boolean = false) {
+
+        if (_isLoading.value) {
+            return
+        }
+
+        if (!forceRefresh && hasLoadedPhotos) {
+            applyFilters(_filters.value)
+            return
+        }
 
         viewModelScope.launch {
+            _isLoading.value = true
 
-            val response = repository.getPhotos()
+            try {
+                val result = mutableListOf<Photo>()
+                var page = 1
+                var hasNextPage = true
+                var failed = false
 
-            println("RAW RESPONSE -> ${response.body()}")
+                while (hasNextPage) {
+                    val response = repository.getPhotos(
+                        page = page,
+                        pageSize = PHOTO_PAGE_SIZE
+                    )
 
-            if (response.isSuccessful) {
+                    if (!response.isSuccessful) {
+                        Log.e("PhotoViewModel", "Error cargando fotos: ${response.code()}")
+                        failed = true
+                        break
+                    }
 
-                val result =
-                    response.body()?.results ?: emptyList()
-
-                result.forEach {
-
-                    println("PHOTO WIDTH -> ${it.width}")
-                    println("PHOTO HEIGHT -> ${it.height}")
-                    println("PHOTO COORDS -> ${it.coordinates}")
+                    val body = response.body()
+                    result += body?.results.orEmpty()
+                    hasNextPage = !body?.next.isNullOrBlank()
+                    page++
                 }
 
-                _allPhotos.value = result
+                if (!failed) {
+                    _allPhotos.value = result
+                    hasLoadedPhotos = true
 
-                applyFilters(_filters.value)
+                    applyFilters(_filters.value)
+                }
+            } catch (e: Exception) {
+                Log.e("PhotoViewModel", "Error cargando fotos", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -178,5 +212,9 @@ class PhotoViewModel : ViewModel() {
                 }
                 .sorted()
                 .take(10)
+    }
+
+    private companion object {
+        const val PHOTO_PAGE_SIZE = 100
     }
 }

@@ -142,12 +142,6 @@ fun PhotoViewerScreen(
             val preview by viewerViewModel.preview.collectAsState()
             val isLoading by viewerViewModel.isLoading.collectAsState()
 
-            LaunchedEffect(photoId, photos.isEmpty()) {
-                if (photoId != null && photos.isEmpty()) {
-                    photoViewModel.loadPhotos()
-                }
-            }
-
             LaunchedEffect(photoId) {
                 if (photoId != null) {
                     if (photos.isEmpty()) {
