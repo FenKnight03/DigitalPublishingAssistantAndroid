@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.ljdit.digitalpublishing.data.repository.PhotoRepository
 import com.ljdit.digitalpublishing.model.Photo
 import com.ljdit.digitalpublishing.model.PhotoFilters
+import com.ljdit.digitalpublishing.model.displayPlatforms
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -143,6 +144,19 @@ class PhotoViewModel : ViewModel() {
                         else -> false
                     }
                 }
+            }
+        }
+
+        if (filters.plataformas.isNotEmpty()) {
+
+            filtered = filtered.filter { photo ->
+
+                val platformKeys =
+                    photo.displayPlatforms()
+                        .mapNotNull { it.key?.lowercase() }
+                        .toSet()
+
+                filters.plataformas.any { it in platformKeys }
             }
         }
 

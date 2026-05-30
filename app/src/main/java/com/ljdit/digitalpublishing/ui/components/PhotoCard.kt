@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -37,6 +38,9 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.ljdit.digitalpublishing.R
 import com.ljdit.digitalpublishing.model.Photo
+import com.ljdit.digitalpublishing.model.PhotoPlatform
+import com.ljdit.digitalpublishing.model.displayPlatforms
+import com.ljdit.digitalpublishing.model.platformDisplayName
 
 @Composable
 fun PhotoCard(
@@ -44,12 +48,9 @@ fun PhotoCard(
     onClick: () -> Unit = {},
     aspectRatio: Float = photo.displayAspectRatio()
 ) {
-    val platformKey = photo.platform?.key?.lowercase()
-    val platformIcon = when (platformKey) {
-        "facebook" -> R.drawable.ic_facebook
-        "instagram" -> R.drawable.ic_instagram
-        else -> null
-    }
+    val platformIcons = photo.displayPlatforms()
+        .mapNotNull { it.platformIcon() }
+        .distinct()
 
     Box(
         modifier = Modifier
@@ -125,7 +126,13 @@ fun PhotoCard(
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
                 .padding(10.dp)
-                .padding(end = if (platformIcon == null) 0.dp else 42.dp)
+                .padding(
+                    end = if (platformIcons.isEmpty()) {
+                        0.dp
+                    } else {
+                        (platformIcons.size.coerceAtMost(2) * 34).dp
+                    }
+                )
         ) {
             photo.producto?.takeIf { it.isNotBlank() }?.let { product ->
                 Text(
@@ -150,7 +157,7 @@ fun PhotoCard(
                     )
                 }
 
-                val platformName = photo.platform?.name?.takeIf { it.isNotBlank() }
+                val platformName = photo.platformDisplayName()
                 if (photo.origen?.isNotBlank() == true && platformName != null) {
                     Spacer(modifier = Modifier.width(6.dp))
                 }
@@ -168,19 +175,35 @@ fun PhotoCard(
             }
         }
 
-        platformIcon?.let { icon ->
-            Image(
-                painter = painterResource(id = icon),
-                contentDescription = platformKey,
+        if (platformIcons.isNotEmpty()) {
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(7.dp)
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.72f))
-                    .padding(5.dp)
-            )
+                    .padding(7.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                platformIcons.take(2).forEach { icon ->
+                    Image(
+                        painter = painterResource(id = icon),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.78f))
+                            .padding(5.dp)
+                    )
+                }
+            }
         }
+    }
+}
+
+private fun PhotoPlatform.platformIcon(): Int? {
+    return when (key?.lowercase()) {
+        "facebook" -> R.drawable.ic_facebook
+        "instagram" -> R.drawable.ic_instagram
+        else -> null
     }
 }
 

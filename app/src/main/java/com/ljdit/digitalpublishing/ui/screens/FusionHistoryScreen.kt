@@ -1,5 +1,6 @@
 package com.ljdit.digitalpublishing.ui.screens
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -176,9 +177,13 @@ fun FusionHistoryScreen(
                             isActionable = isCurrentTabActionable,
                             onClick = {
                                 if (isCurrentTabActionable) {
-                                    navController.navigate(
+                                    val format = fusion.formato?.takeIf { it.isNotBlank() }
+                                    val route = if (format == null) {
                                         "preview_from_history/${fusion.id}"
-                                    )
+                                    } else {
+                                        "preview_from_history/${fusion.id}/${Uri.encode(format)}"
+                                    }
+                                    navController.navigate(route)
                                 }
                             }
                         )

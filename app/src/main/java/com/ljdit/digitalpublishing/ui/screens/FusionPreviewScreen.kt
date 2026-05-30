@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -48,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ljdit.digitalpublishing.core.ui.FusionActionCenter
+import com.ljdit.digitalpublishing.model.PhotoPlatform
 import com.ljdit.digitalpublishing.viewmodel.FusionViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -61,6 +64,7 @@ fun FusionPreviewScreen(
     coordinate: String? = null,
     fusionId: String? = null,
     fromHistory: Boolean = false,
+    platforms: List<PhotoPlatform> = emptyList(),
     viewModel: FusionViewModel = viewModel()
 ) {
     val preview by viewModel.preview.collectAsState()
@@ -69,6 +73,23 @@ fun FusionPreviewScreen(
 
     var caption by remember { mutableStateOf("") }
     var captionError by remember { mutableStateOf<String?>(null) }
+    val platformOptions = remember(platforms) {
+        platforms
+            .mapNotNull { platform ->
+                val key = platform.key?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+                key?.let {
+                    platform.copy(
+                        key = it,
+                        name = platform.name?.takeIf { name -> name.isNotBlank() }
+                            ?: it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) }
+                    )
+                }
+            }
+            .distinctBy { it.key }
+    }
+    var selectedPlatformKeys by remember(platformOptions) {
+        mutableStateOf(platformOptions.mapNotNull { it.key }.toSet())
+    }
 
     LaunchedEffect(preview?.data?.caption, fromHistory) {
         if (fromHistory) {
@@ -100,6 +121,16 @@ fun FusionPreviewScreen(
         } else {
             cleanCaption
         }
+    }
+
+    fun platformsForRequest(): List<String>? {
+        if (platformOptions.size <= 1) {
+            return null
+        }
+
+        return platformOptions
+            .mapNotNull { it.key }
+            .filter { it in selectedPlatformKeys }
     }
 
     fun navigateToGallery() {
@@ -167,6 +198,26 @@ fun FusionPreviewScreen(
                         isError = captionError != null,
                         supportingText = {
                             captionError?.let { Text(it) }
+                        }
+                    )
+                }
+
+                if (platformOptions.size > 1) {
+                    PlatformSelectionCard(
+                        platforms = platformOptions,
+                        selectedKeys = selectedPlatformKeys,
+                        onToggle = { platform ->
+                            val key = platform.key ?: return@PlatformSelectionCard
+                            selectedPlatformKeys =
+                                if (key in selectedPlatformKeys) {
+                                    if (selectedPlatformKeys.size == 1) {
+                                        selectedPlatformKeys
+                                    } else {
+                                        selectedPlatformKeys - key
+                                    }
+                                } else {
+                                    selectedPlatformKeys + key
+                                }
                         }
                     )
                 }
@@ -260,13 +311,19 @@ fun FusionPreviewScreen(
                         Button(
                             onClick = {
                                 val cleanCaption = captionOrShowError() ?: return@Button
+                                val selectedPlatforms = platformsForRequest()
+                                if (selectedPlatforms?.isEmpty() == true) {
+                                    captionError = "Selecciona al menos una plataforma."
+                                    return@Button
+                                }
 
                                 FusionActionCenter.saveAndPublish(
                                     photoId = photoId!!.toInt(),
                                     logoId = logoId!!.toInt(),
                                     coordinate = coordinate!!.toInt(),
                                     caption = cleanCaption,
-                                    scheduledTime = scheduledTime
+                                    scheduledTime = scheduledTime,
+                                    platforms = selectedPlatforms
                                 )
 
                                 navigateToGallery()
@@ -286,12 +343,18 @@ fun FusionPreviewScreen(
                         Button(
                             onClick = {
                                 val cleanCaption = captionOrShowError() ?: return@Button
+                                val selectedPlatforms = platformsForRequest()
+                                if (selectedPlatforms?.isEmpty() == true) {
+                                    captionError = "Selecciona al menos una plataforma."
+                                    return@Button
+                                }
 
                                 fusionId?.toIntOrNull()?.let {
                                     FusionActionCenter.publishFusion(
                                         fusionId = it,
                                         caption = cleanCaption,
-                                        scheduledTime = scheduledTime
+                                        scheduledTime = scheduledTime,
+                                        platforms = selectedPlatforms
                                     )
                                 }
 
@@ -365,6 +428,38 @@ private fun PreviewImageCard(base64: String?) {
                         contentScale = ContentScale.Fit
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlatformSelectionCard(
+    platforms: List<PhotoPlatform>,
+    selectedKeys: Set<String>,
+    onToggle: (PhotoPlatform) -> Unit
+) {
+    PreviewCard {
+        Text(
+            text = "Plataformas",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            platforms.forEach { platform ->
+                val key = platform.key.orEmpty()
+                FilterChip(
+                    selected = key in selectedKeys,
+                    onClick = { onToggle(platform) },
+                    label = {
+                        Text(platform.name ?: key)
+                    }
+                )
             }
         }
     }

@@ -79,7 +79,8 @@ object FusionActionCenter {
         logoId: Int,
         coordinate: Int,
         caption: String,
-        scheduledTime: Long?
+        scheduledTime: Long?,
+        platforms: List<String>? = null
     ) {
         runAction(
             title = if (scheduledTime == null) "Publicando contenido" else "Programando publicacion",
@@ -109,30 +110,32 @@ object FusionActionCenter {
                     message = "No se obtuvo el id de fusion."
                 )
 
-            publishSavedFusion(fusionId, caption, scheduledTime)
+            publishSavedFusion(fusionId, caption, scheduledTime, platforms)
         }
     }
 
     fun publishFusion(
         fusionId: Int,
         caption: String,
-        scheduledTime: Long?
+        scheduledTime: Long?,
+        platforms: List<String>? = null
     ) {
         runAction(
             title = if (scheduledTime == null) "Publicando contenido" else "Programando publicacion",
             message = "Puedes seguir navegando. Te avisamos cuando Meta responda."
         ) {
-            publishSavedFusion(fusionId, caption, scheduledTime)
+            publishSavedFusion(fusionId, caption, scheduledTime, platforms)
         }
     }
 
     private suspend fun publishSavedFusion(
         fusionId: Int,
         caption: String,
-        scheduledTime: Long?
+        scheduledTime: Long?,
+        platforms: List<String>?
     ): ActionResult {
         return try {
-            val response = repository.publishFusion(fusionId, caption, scheduledTime)
+            val response = repository.publishFusion(fusionId, caption, scheduledTime, platforms)
 
             when {
                 response.isSuccessful && response.body()?.success == true ->

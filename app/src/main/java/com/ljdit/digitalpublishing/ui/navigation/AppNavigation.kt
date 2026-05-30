@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
+import com.ljdit.digitalpublishing.model.PhotoPlatform
+import com.ljdit.digitalpublishing.model.displayPlatforms
 import com.ljdit.digitalpublishing.ui.screens.*
 import com.ljdit.digitalpublishing.viewmodel.PhotoViewModel
 
@@ -58,7 +60,11 @@ fun AppNavigation() {
                 navController = navController,
                 photoId = photoId,
                 logoId = logoId,
-                coordinate = coordinate
+                coordinate = coordinate,
+                platforms = photoViewModel.photos.value
+                    .firstOrNull { it.id.toString() == photoId }
+                    ?.displayPlatforms()
+                    .orEmpty()
             )
 
         }
@@ -76,7 +82,24 @@ fun AppNavigation() {
             FusionPreviewScreen(
                 navController = navController,
                 fusionId = fusionId,
-                fromHistory = true
+                fromHistory = true,
+                platforms = emptyList()
+            )
+        }
+
+        composable("preview_from_history/{fusionId}/{format}") { backStackEntry ->
+
+            val fusionId = backStackEntry.arguments
+                ?.getString("fusionId")
+                ?: return@composable
+
+            val format = backStackEntry.arguments?.getString("format")
+
+            FusionPreviewScreen(
+                navController = navController,
+                fusionId = fusionId,
+                fromHistory = true,
+                platforms = platformsForFusionFormat(format)
             )
         }
 
@@ -104,5 +127,20 @@ fun AppNavigation() {
         }
 
 
+    }
+}
+
+fun platformsForFusionFormat(format: String?): List<PhotoPlatform> {
+    return when (format?.lowercase()) {
+        "cuadrado", "square", "horizontal" ->
+            listOf(PhotoPlatform(key = "facebook", name = "Facebook", iconUrl = null))
+        "semivertical", "semi_vertical", "semi-vertical" ->
+            listOf(
+                PhotoPlatform(key = "facebook", name = "Facebook", iconUrl = null),
+                PhotoPlatform(key = "instagram", name = "Instagram", iconUrl = null)
+            )
+        "vertical" ->
+            listOf(PhotoPlatform(key = "instagram", name = "Instagram", iconUrl = null))
+        else -> emptyList()
     }
 }

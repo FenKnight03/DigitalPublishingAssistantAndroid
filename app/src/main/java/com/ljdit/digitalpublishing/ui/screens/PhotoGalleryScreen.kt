@@ -372,6 +372,9 @@ private fun GalleryFilterPanel(
     val contenidos = remember(filters.contenidos) {
         mutableStateListOf<String>().apply { addAll(filters.contenidos) }
     }
+    val plataformas = remember(filters.plataformas) {
+        mutableStateListOf<String>().apply { addAll(filters.plataformas) }
+    }
     var orden by remember(filters.orden) { mutableStateOf(filters.orden) }
     var busqueda by remember(filters.busqueda) { mutableStateOf(filters.busqueda) }
 
@@ -430,6 +433,21 @@ private fun GalleryFilterPanel(
                 }
             }
 
+            FilterGroup(title = "Plataforma") {
+                listOf(
+                    "facebook" to "Facebook",
+                    "instagram" to "Instagram"
+                ).forEach { (value, label) ->
+                    FilterCheckbox(
+                        label = label,
+                        checked = plataformas.contains(value),
+                        onCheckedChange = { checked ->
+                            if (checked) plataformas.add(value) else plataformas.remove(value)
+                        }
+                    )
+                }
+            }
+
             FilterGroup(title = "Orden") {
                 FilterRadio(
                     label = "Mas recientes",
@@ -470,6 +488,7 @@ private fun GalleryFilterPanel(
                             formatos = formatos.toSet(),
                             origenes = origenes.toSet(),
                             contenidos = contenidos.toSet(),
+                            plataformas = plataformas.toSet(),
                             orden = orden,
                             busqueda = busqueda
                         )
@@ -805,6 +824,7 @@ private fun PhotoFilters.activeCount(): Int {
     if (formatos.isNotEmpty()) count++
     if (origenes.isNotEmpty()) count++
     if (contenidos.isNotEmpty()) count++
+    if (plataformas.isNotEmpty()) count++
     if (orden != "recientes") count++
     if (busqueda.isNotBlank()) count++
     return count

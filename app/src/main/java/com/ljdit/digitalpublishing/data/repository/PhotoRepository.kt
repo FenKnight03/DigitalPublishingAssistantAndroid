@@ -82,22 +82,30 @@ class PhotoRepository {
     suspend fun publishFusion(
         fusionId: Int,
         caption: String,
-        scheduledTime: Long? = null
+        scheduledTime: Long? = null,
+        platforms: List<String>? = null
     ): Response<PublishResponse> {
 
         val scheduledTimeSeconds = scheduledTime?.toUnixSeconds()
+        val platformKeys = platforms
+            ?.map { it.trim().lowercase() }
+            ?.filter { it.isNotBlank() }
+            ?.distinct()
+            ?.takeIf { it.isNotEmpty() }
 
         Log.d(
             "PublishRequest",
             "id_fusion=$fusionId, captionLength=${caption.length}, " +
-                "scheduledTimeInput=$scheduledTime, scheduled_time=$scheduledTimeSeconds"
+                "scheduledTimeInput=$scheduledTime, scheduled_time=$scheduledTimeSeconds, " +
+                "platforms=$platformKeys"
         )
 
         return RetrofitClient.photoApi.publishFusion(
             PublishRequest(
                 id_fusion = fusionId,
                 caption = caption,
-                scheduled_time = scheduledTimeSeconds
+                scheduled_time = scheduledTimeSeconds,
+                platforms = platformKeys
             )
         )
     }
