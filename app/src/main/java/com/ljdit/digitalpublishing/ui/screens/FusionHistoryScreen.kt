@@ -176,17 +176,6 @@ fun FusionHistoryScreen(
                             isActionable = isCurrentTabActionable,
                             onClick = {
                                 if (isCurrentTabActionable) {
-                                    val format = fusion.formato
-                                        ?.trim()
-                                        ?.takeIf { it.isNotBlank() }
-                                    navController.currentBackStackEntry?.savedStateHandle?.apply {
-                                        if (format != null) {
-                                            set("fusion_format_${fusion.id}", format)
-                                        }
-                                        fusion.photoId?.let {
-                                            set("fusion_photo_id_${fusion.id}", it)
-                                        }
-                                    }
                                     navController.navigate("preview_from_history/${fusion.id}")
                                 }
                             }

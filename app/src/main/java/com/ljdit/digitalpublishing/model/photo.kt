@@ -27,7 +27,7 @@ data class Photo(
 
     val platform: PhotoPlatform? = null,
 
-    val platforms: List<PhotoPlatform> = emptyList(),
+    val platforms: List<PhotoPlatform>? = emptyList(),
 
     val producto: String? = null
 )
@@ -53,7 +53,7 @@ data class PhotoPlatform(
 )
 
 fun Photo.displayPlatforms(): List<PhotoPlatform> =
-    platforms.takeIf { it.isNotEmpty() }
+    platforms.orEmpty().takeIf { it.isNotEmpty() }
         ?: platform?.let { listOf(it) }
         ?: emptyList()
 

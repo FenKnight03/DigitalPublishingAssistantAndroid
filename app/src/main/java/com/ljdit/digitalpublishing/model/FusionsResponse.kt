@@ -34,6 +34,13 @@ data class FusionItem(
 
     val formato: String?,
 
+    @SerializedName("formato_display")
+    val formatoDisplay: String? = null,
+
+    val platform: PhotoPlatform? = null,
+
+    val platforms: List<PhotoPlatform>? = emptyList(),
+
     val fecha_publicacion: String?,
 
     val caption: String? = null

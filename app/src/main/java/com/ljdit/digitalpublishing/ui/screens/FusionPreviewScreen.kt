@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.graphics.BitmapFactory
 import android.util.Base64
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ljdit.digitalpublishing.core.ui.FusionActionCenter
 import com.ljdit.digitalpublishing.model.PhotoPlatform
+import com.ljdit.digitalpublishing.model.previewDisplayPlatforms
 import com.ljdit.digitalpublishing.viewmodel.FusionViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -72,10 +74,24 @@ fun FusionPreviewScreen(
     val isLoadingPreview by viewModel.isLoading.collectAsState()
     val fusionActionState by FusionActionCenter.state.collectAsState()
 
+    fun navigateToHistory() {
+        navController.navigate("home/1") {
+            popUpTo(navController.graph.id) {
+                inclusive = true
+            }
+            launchSingleTop = true
+        }
+    }
+
+    BackHandler(enabled = returnToHistory) {
+        navigateToHistory()
+    }
+
     var caption by remember { mutableStateOf("") }
     var captionError by remember { mutableStateOf<String?>(null) }
-    val platformOptions = remember(platforms) {
-        platforms
+    val previewPlatforms = preview?.data?.previewDisplayPlatforms().orEmpty()
+    val platformOptions = remember(platforms, previewPlatforms) {
+        (previewPlatforms.takeIf { it.isNotEmpty() } ?: platforms)
             .mapNotNull { platform ->
                 val key = platform.key?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
                 key?.let {
@@ -135,8 +151,12 @@ fun FusionPreviewScreen(
     }
 
     fun navigateAfterAction() {
-        val destination = if (returnToHistory) "home/1" else "home"
-        navController.navigate(destination) {
+        if (returnToHistory) {
+            navigateToHistory()
+            return
+        }
+
+        navController.navigate("home") {
             popUpTo(navController.graph.id) {
                 inclusive = true
             }
