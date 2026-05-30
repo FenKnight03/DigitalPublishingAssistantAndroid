@@ -3,6 +3,7 @@ package com.ljdit.digitalpublishing.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ljdit.digitalpublishing.core.session.SessionManager
 import com.ljdit.digitalpublishing.data.repository.PhotoRepository
 import com.ljdit.digitalpublishing.model.Photo
 import com.ljdit.digitalpublishing.model.PhotoFilters
@@ -40,14 +41,18 @@ class PhotoViewModel : ViewModel() {
         = _isLoading
 
     private var hasLoadedPhotos = false
+    private var loadedSessionKey: String? = null
 
     fun loadPhotos(forceRefresh: Boolean = false) {
+
+        val currentSessionKey = SessionManager.photoScopeKey()
+        val shouldRefreshForSession = loadedSessionKey != currentSessionKey
 
         if (_isLoading.value) {
             return
         }
 
-        if (!forceRefresh && hasLoadedPhotos) {
+        if (!forceRefresh && !shouldRefreshForSession && hasLoadedPhotos) {
             applyFilters(_filters.value)
             return
         }
@@ -81,6 +86,7 @@ class PhotoViewModel : ViewModel() {
 
                 if (!failed) {
                     _allPhotos.value = result
+                    loadedSessionKey = currentSessionKey
                     hasLoadedPhotos = true
 
                     applyFilters(_filters.value)
@@ -231,4 +237,12 @@ class PhotoViewModel : ViewModel() {
     private companion object {
         const val PHOTO_PAGE_SIZE = 100
     }
+}
+
+private fun SessionManager.photoScopeKey(): String {
+    return listOf(
+        token.orEmpty(),
+        isAdmin.toString(),
+        distributorId?.toString().orEmpty()
+    ).joinToString("|")
 }

@@ -17,6 +17,9 @@ data class FusionItem(
 
     val id: Int,
 
+    @SerializedName("photo_id")
+    val photoId: Int? = null,
+
     @SerializedName("thumbnail_url")
     val thumbnail_url: String,
 

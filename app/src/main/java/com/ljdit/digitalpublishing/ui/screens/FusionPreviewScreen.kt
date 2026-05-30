@@ -64,6 +64,7 @@ fun FusionPreviewScreen(
     coordinate: String? = null,
     fusionId: String? = null,
     fromHistory: Boolean = false,
+    returnToHistory: Boolean = false,
     platforms: List<PhotoPlatform> = emptyList(),
     viewModel: FusionViewModel = viewModel()
 ) {
@@ -133,8 +134,9 @@ fun FusionPreviewScreen(
             .filter { it in selectedPlatformKeys }
     }
 
-    fun navigateToGallery() {
-        navController.navigate("home") {
+    fun navigateAfterAction() {
+        val destination = if (returnToHistory) "home/1" else "home"
+        navController.navigate(destination) {
             popUpTo(navController.graph.id) {
                 inclusive = true
             }
@@ -298,7 +300,7 @@ fun FusionPreviewScreen(
                                     caption = cleanCaption
                                 )
 
-                                navigateToGallery()
+                                navigateAfterAction()
                             },
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth()
@@ -326,7 +328,7 @@ fun FusionPreviewScreen(
                                     platforms = selectedPlatforms
                                 )
 
-                                navigateToGallery()
+                                navigateAfterAction()
                             },
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth()
@@ -358,7 +360,7 @@ fun FusionPreviewScreen(
                                     )
                                 }
 
-                                navigateToGallery()
+                                navigateAfterAction()
                             },
                             enabled = actionsEnabled,
                             modifier = Modifier.fillMaxWidth()
@@ -462,6 +464,33 @@ private fun PlatformSelectionCard(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Se publicara en: ${selectedKeys.platformLabel()}",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray
+        )
+    }
+}
+
+private fun Set<String>.platformLabel(): String {
+    val names = this
+        .mapNotNull { key ->
+            when (key.lowercase()) {
+                "facebook" -> "Facebook"
+                "instagram" -> "Instagram"
+                else -> null
+            }
+        }
+        .distinct()
+
+    return when (names.size) {
+        0 -> "ninguna plataforma"
+        1 -> names.first()
+        2 -> "${names[0]} / ${names[1]}"
+        else -> names.dropLast(1).joinToString(", ") + " e " + names.last()
     }
 }
 

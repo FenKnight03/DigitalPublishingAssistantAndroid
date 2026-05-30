@@ -56,15 +56,19 @@ fun AppNavigation() {
             val logoId = backStackEntry.arguments?.getString("logoId")
             val coordinate = backStackEntry.arguments?.getString("coordinate")
 
+            val photo = photoViewModel.photos.value
+                .firstOrNull { it.id.toString() == photoId }
+            val platforms = photo
+                ?.displayPlatforms()
+                ?.takeIf { it.isNotEmpty() }
+                ?: platformsForFusionFormat(photo?.formato)
+
             FusionPreviewScreen(
                 navController = navController,
                 photoId = photoId,
                 logoId = logoId,
                 coordinate = coordinate,
-                platforms = photoViewModel.photos.value
-                    .firstOrNull { it.id.toString() == photoId }
-                    ?.displayPlatforms()
-                    .orEmpty()
+                platforms = platforms
             )
 
         }
@@ -78,12 +82,20 @@ fun AppNavigation() {
             val fusionId = backStackEntry.arguments
                 ?.getString("fusionId")
                 ?: return@composable
+            val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
+            val savedFormat = savedStateHandle?.get<String>("fusion_format_$fusionId")
+            val savedPhotoId = savedStateHandle?.get<Int>("fusion_photo_id_$fusionId")
 
             FusionPreviewScreen(
                 navController = navController,
                 fusionId = fusionId,
                 fromHistory = true,
-                platforms = emptyList()
+                returnToHistory = true,
+                platforms = platformsForHistoryPreview(
+                    photoId = savedPhotoId,
+                    format = savedFormat,
+                    photoViewModel = photoViewModel
+                )
             )
         }
 
@@ -94,11 +106,15 @@ fun AppNavigation() {
                 ?: return@composable
 
             val format = backStackEntry.arguments?.getString("format")
+                ?: navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<String>("fusion_format_$fusionId")
 
             FusionPreviewScreen(
                 navController = navController,
                 fusionId = fusionId,
                 fromHistory = true,
+                returnToHistory = true,
                 platforms = platformsForFusionFormat(format)
             )
         }
@@ -130,11 +146,26 @@ fun AppNavigation() {
     }
 }
 
+private fun platformsForHistoryPreview(
+    photoId: Int?,
+    format: String?,
+    photoViewModel: PhotoViewModel
+): List<PhotoPlatform> {
+    val photoPlatforms = photoId?.let { id ->
+        (photoViewModel.allPhotos.value + photoViewModel.photos.value)
+            .firstOrNull { it.id == id }
+            ?.displayPlatforms()
+            ?.takeIf { it.isNotEmpty() }
+    }
+
+    return photoPlatforms ?: platformsForFusionFormat(format)
+}
+
 fun platformsForFusionFormat(format: String?): List<PhotoPlatform> {
-    return when (format?.lowercase()) {
+    return when (format?.normalizedFusionFormat()) {
         "cuadrado", "square", "horizontal" ->
             listOf(PhotoPlatform(key = "facebook", name = "Facebook", iconUrl = null))
-        "semivertical", "semi_vertical", "semi-vertical" ->
+        "semivertical" ->
             listOf(
                 PhotoPlatform(key = "facebook", name = "Facebook", iconUrl = null),
                 PhotoPlatform(key = "instagram", name = "Instagram", iconUrl = null)
@@ -144,3 +175,10 @@ fun platformsForFusionFormat(format: String?): List<PhotoPlatform> {
         else -> emptyList()
     }
 }
+
+private fun String.normalizedFusionFormat(): String =
+    trim()
+        .lowercase()
+        .replace("_", "")
+        .replace("-", "")
+        .replace(" ", "")
