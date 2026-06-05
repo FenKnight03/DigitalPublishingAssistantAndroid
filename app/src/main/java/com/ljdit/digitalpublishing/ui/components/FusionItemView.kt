@@ -15,8 +15,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Rectangle
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -107,6 +110,9 @@ private fun String?.formattedPublicationDate(): String {
 fun FusionItemView(
     fusion: FusionItem,
     isActionable: Boolean = true,
+    isDeleting: Boolean = false,
+    onDeleteFromNetworks: (() -> Unit)? = null,
+    deleteContentDescription: String = "Eliminar",
     onClick: () -> Unit
 ) {
     Surface(
@@ -183,7 +189,26 @@ fun FusionItemView(
                 )
             }
 
-            if (isActionable) {
+            if (onDeleteFromNetworks != null) {
+                IconButton(
+                    onClick = onDeleteFromNetworks,
+                    enabled = !isDeleting
+                ) {
+                    if (isDeleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp,
+                            color = HistoryBrand
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = deleteContentDescription,
+                            tint = HistoryBrand
+                        )
+                    }
+                }
+            } else if (isActionable) {
                 Icon(
                     imageVector = Icons.Rounded.ChevronRight,
                     contentDescription = null,

@@ -8,9 +8,11 @@ data class FusionsResponse(
 )
 
 data class FusionsData(
-    val pendientes: List<FusionItem>,
-    val agendadas: List<FusionItem>,
-    val publicadas: List<FusionItem>
+    val pendientes: List<FusionItem> = emptyList(),
+    val agendadas: List<FusionItem> = emptyList(),
+    val publicadas: List<FusionItem> = emptyList(),
+    @SerializedName("eliminadas_redes")
+    val eliminadasRedes: List<FusionItem> = emptyList()
 )
 
 data class FusionItem(
@@ -40,6 +42,21 @@ data class FusionItem(
     val platform: PhotoPlatform? = null,
 
     val platforms: List<PhotoPlatform>? = emptyList(),
+
+    @SerializedName("publicada")
+    val publicada: Boolean = false,
+
+    @SerializedName("eliminado_de_redes")
+    val eliminadoDeRedes: Boolean = false,
+
+    @SerializedName("has_facebook_post")
+    val hasFacebookPost: Boolean = false,
+
+    @SerializedName("has_instagram_post")
+    val hasInstagramPost: Boolean = false,
+
+    @SerializedName("can_delete_post")
+    val canDeletePost: Boolean = false,
 
     val fecha_publicacion: String?,
 

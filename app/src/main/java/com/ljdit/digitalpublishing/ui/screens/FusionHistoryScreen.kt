@@ -21,8 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Collections
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -30,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ljdit.digitalpublishing.core.session.SessionManager
@@ -57,6 +61,10 @@ private val HistoryCanvas = Color(0xFFF2F4F8)
 private val HistoryField = Color(0xFFF3F3F6)
 
 private fun FusionItem.belongsToCurrentDistributor(): Boolean {
+    if (SessionManager.isAdmin) {
+        return true
+    }
+
     val currentDistributorId = SessionManager.distributorId
 
     if (currentDistributorId != null && distributorId != null) {
@@ -101,6 +109,11 @@ fun FusionHistoryScreen(
                 .background(HistoryCanvas)
         ) {
             val fusions by viewModel.fusions.collectAsState()
+            val deletingPublishedPostId by viewModel.deletingPublishedPostId.collectAsState()
+            val deletingFusionId by viewModel.deletingFusionId.collectAsState()
+            val historyActionMessage by viewModel.historyActionMessage.collectAsState()
+            var pendingDeleteItem by remember { mutableStateOf<FusionItem?>(null) }
+            var pendingFusionDeleteItem by remember { mutableStateOf<FusionItem?>(null) }
 
             Log.d("FUSIONS_DEBUG", fusions.toString())
 
@@ -116,9 +129,12 @@ fun FusionHistoryScreen(
                 PublicationFilter.Pending -> fusions?.pendientes
                 PublicationFilter.Scheduled -> fusions?.agendadas
                 PublicationFilter.Published -> fusions?.publicadas
+                PublicationFilter.DeletedFromNetworks -> fusions?.eliminadasRedes
             }?.filter { it.belongsToCurrentDistributor() }.orEmpty()
 
             val isCurrentTabActionable = selectedFilter == PublicationFilter.Pending
+            val canDeleteFromCurrentTab = selectedFilter == PublicationFilter.Published
+            val canDeleteFusionFromCurrentTab = selectedFilter == PublicationFilter.Pending
 
             PrimaryTabRow(
                 selectedTabIndex = selectedTab,
@@ -132,7 +148,9 @@ fun FusionHistoryScreen(
                         text = {
                             Text(
                                 text = filter.title,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp,
+                                maxLines = 1
                             )
                         },
                         selectedContentColor = HistoryBrand,
@@ -174,6 +192,24 @@ fun FusionHistoryScreen(
                         FusionItemView(
                             fusion = fusion,
                             isActionable = isCurrentTabActionable,
+                            isDeleting = deletingPublishedPostId == fusion.id || deletingFusionId == fusion.id,
+                            onDeleteFromNetworks =
+                                when {
+                                    canDeleteFromCurrentTab && fusion.canDeletePost ->
+                                        ({ pendingDeleteItem = fusion })
+
+                                    canDeleteFusionFromCurrentTab ->
+                                        ({ pendingFusionDeleteItem = fusion })
+
+                                    else ->
+                                        null
+                                },
+                            deleteContentDescription =
+                                if (canDeleteFusionFromCurrentTab) {
+                                    "Eliminar fusion"
+                                } else {
+                                    "Eliminar publicacion de redes"
+                                },
                             onClick = {
                                 if (isCurrentTabActionable) {
                                     navController.navigate("preview_from_history/${fusion.id}")
@@ -182,6 +218,89 @@ fun FusionHistoryScreen(
                         )
                     }
                 }
+            }
+
+            pendingDeleteItem?.let { item ->
+                AlertDialog(
+                    onDismissRequest = {
+                        if (deletingPublishedPostId == null) {
+                            pendingDeleteItem = null
+                        }
+                    },
+                    title = {
+                        Text("Eliminar publicacion")
+                    },
+                    text = {
+                        Text("¿Eliminar esta publicación de redes? Esta acción es PERMANENTE.")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            enabled = deletingPublishedPostId == null,
+                            onClick = {
+                                viewModel.deletePublishedPost(item.id)
+                                pendingDeleteItem = null
+                            }
+                        ) {
+                            Text("Eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            enabled = deletingPublishedPostId == null,
+                            onClick = { pendingDeleteItem = null }
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
+
+            pendingFusionDeleteItem?.let { item ->
+                AlertDialog(
+                    onDismissRequest = {
+                        if (deletingFusionId == null) {
+                            pendingFusionDeleteItem = null
+                        }
+                    },
+                    title = {
+                        Text("Eliminar fusion")
+                    },
+                    text = {
+                        Text("Esta fusion esta pendiente y se eliminara del historial. La foto original no se borrara.")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            enabled = deletingFusionId == null,
+                            onClick = {
+                                viewModel.deleteFusion(item.id)
+                                pendingFusionDeleteItem = null
+                            }
+                        ) {
+                            Text("Eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            enabled = deletingFusionId == null,
+                            onClick = { pendingFusionDeleteItem = null }
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
+
+            historyActionMessage?.let { message ->
+                AlertDialog(
+                    onDismissRequest = { viewModel.dismissHistoryActionMessage() },
+                    title = { Text("Historial") },
+                    text = { Text(message) },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.dismissHistoryActionMessage() }) {
+                            Text("OK")
+                        }
+                    }
+                )
             }
         }
     }
@@ -294,6 +413,7 @@ private fun SectionEyebrow(
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = HistorySoftInk
+
         )
     }
 }
@@ -321,6 +441,12 @@ private enum class PublicationFilter(
         sectionTitle = "Publicadas",
         emptyTitle = "No hay publicadas",
         icon = Icons.Rounded.CheckCircle
+    ),
+    DeletedFromNetworks(
+        title = "Eliminadas",
+        sectionTitle = "Eliminadas de redes",
+        emptyTitle = "No hay eliminadas",
+        icon = Icons.Rounded.DeleteSweep
     );
 
     fun summaryText(count: Int): String {
@@ -344,6 +470,13 @@ private enum class PublicationFilter(
                     "1 publicacion enviada."
                 } else {
                     "$count publicaciones enviadas."
+                }
+
+            DeletedFromNetworks ->
+                if (count == 1) {
+                    "1 publicacion eliminada de redes."
+                } else {
+                    "$count publicaciones eliminadas de redes."
                 }
         }
     }

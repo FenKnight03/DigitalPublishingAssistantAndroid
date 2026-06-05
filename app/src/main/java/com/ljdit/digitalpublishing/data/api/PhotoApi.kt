@@ -3,6 +3,10 @@ package com.ljdit.digitalpublishing.data.api
 import PublishRequest
 import PublishResponse
 import com.ljdit.digitalpublishing.model.ConnectionStatus
+import com.ljdit.digitalpublishing.model.DeleteFusionRequest
+import com.ljdit.digitalpublishing.model.DeleteFusionResponse
+import com.ljdit.digitalpublishing.model.DeletePublishedPostRequest
+import com.ljdit.digitalpublishing.model.DeletePublishedPostResponse
 import com.ljdit.digitalpublishing.model.Distributor
 import com.ljdit.digitalpublishing.model.FusionPreviewRequest
 import com.ljdit.digitalpublishing.model.FusionPreviewResponse
@@ -72,6 +76,11 @@ interface PhotoApi {
     @GET("api/media_library/fusions/")
     suspend fun getFusions(): Response<FusionsResponse>
 
+    @POST("api/media_library/fusion/delete/")
+    suspend fun deleteFusion(
+        @Body body: DeleteFusionRequest
+    ): Response<DeleteFusionResponse>
+
     @GET("api/media_library/fusion/{id}/")
     suspend fun getFusionFull(
         @Path("id") fusionId: Int
@@ -81,6 +90,11 @@ interface PhotoApi {
     suspend fun publishFusion(
         @Body body: PublishRequest
     ): Response<PublishResponse>
+
+    @POST("api/publishing/eliminar-post/")
+    suspend fun deletePublishedPost(
+        @Body body: DeletePublishedPostRequest
+    ): Response<DeletePublishedPostResponse>
 
     @GET("api/publishing/conexion/")
     suspend fun getConnectionStatus(): Response<ConnectionStatus>

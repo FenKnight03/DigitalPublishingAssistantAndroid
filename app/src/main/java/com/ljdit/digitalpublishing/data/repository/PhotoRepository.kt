@@ -4,6 +4,10 @@ import PublishRequest
 import PublishResponse
 import android.util.Log
 import com.ljdit.digitalpublishing.data.api.RetrofitClient
+import com.ljdit.digitalpublishing.model.DeleteFusionRequest
+import com.ljdit.digitalpublishing.model.DeleteFusionResponse
+import com.ljdit.digitalpublishing.model.DeletePublishedPostRequest
+import com.ljdit.digitalpublishing.model.DeletePublishedPostResponse
 import com.ljdit.digitalpublishing.model.FusionPreviewRequest
 import com.ljdit.digitalpublishing.model.FusionPreviewResponse
 import com.ljdit.digitalpublishing.model.FusionsResponse
@@ -73,6 +77,12 @@ class PhotoRepository {
     suspend fun getFusionFull(fusionId: Int) =
         RetrofitClient.photoApi.getFusionFull(fusionId)
 
+    suspend fun deleteFusion(fusionId: Int): Response<DeleteFusionResponse> {
+        return RetrofitClient.photoApi.deleteFusion(
+            DeleteFusionRequest(fusionId = fusionId)
+        )
+    }
+
     suspend fun getDistributors() =
         RetrofitClient.photoApi.getDistributors()
 
@@ -107,6 +117,12 @@ class PhotoRepository {
                 scheduled_time = scheduledTimeSeconds,
                 platforms = platformKeys
             )
+        )
+    }
+
+    suspend fun deletePublishedPost(fusionId: Int): Response<DeletePublishedPostResponse> {
+        return RetrofitClient.photoApi.deletePublishedPost(
+            DeletePublishedPostRequest(fusionId = fusionId)
         )
     }
 

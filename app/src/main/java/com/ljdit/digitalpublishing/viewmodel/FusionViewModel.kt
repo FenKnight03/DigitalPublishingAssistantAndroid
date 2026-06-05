@@ -24,6 +24,15 @@ class FusionViewModel : ViewModel() {
     private val _fusions = MutableStateFlow<FusionsData?>(null)
     val fusions: StateFlow<FusionsData?> = _fusions
 
+    private val _deletingPublishedPostId = MutableStateFlow<Int?>(null)
+    val deletingPublishedPostId: StateFlow<Int?> = _deletingPublishedPostId
+
+    private val _deletingFusionId = MutableStateFlow<Int?>(null)
+    val deletingFusionId: StateFlow<Int?> = _deletingFusionId
+
+    private val _historyActionMessage = MutableStateFlow<String?>(null)
+    val historyActionMessage: StateFlow<String?> = _historyActionMessage
+
     fun generatePreview(
         photoId: Int,
         logoId: Int,
@@ -97,5 +106,85 @@ class FusionViewModel : ViewModel() {
                 _isLoading.value = false
             }
         }
+    }
+
+    fun deletePublishedPost(fusionId: Int) {
+        if (_deletingPublishedPostId.value != null || _deletingFusionId.value != null) {
+            return
+        }
+
+        viewModelScope.launch {
+            _deletingPublishedPostId.value = fusionId
+            _historyActionMessage.value = null
+
+            try {
+                val response = repository.deletePublishedPost(fusionId)
+
+                when {
+                    response.isSuccessful && response.body()?.success == true -> {
+                        _historyActionMessage.value = "Publicacion eliminada de redes correctamente."
+                        loadFusions()
+                    }
+
+                    response.code() == 401 ->
+                        _historyActionMessage.value = "Tu sesion expiro. Inicia sesion nuevamente."
+
+                    else -> {
+                        val apiMessage = response.body()?.message
+                            ?: response.errorBody()?.string()
+                            ?: "No se pudo eliminar la publicacion."
+                        _historyActionMessage.value = apiMessage
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("Fusion", "Error eliminando post publicado $fusionId", e)
+                _historyActionMessage.value = "Error de red. Intenta nuevamente."
+            } finally {
+                _deletingPublishedPostId.value = null
+            }
+        }
+    }
+
+    fun deleteFusion(fusionId: Int) {
+        if (_deletingFusionId.value != null || _deletingPublishedPostId.value != null) {
+            return
+        }
+
+        viewModelScope.launch {
+            _deletingFusionId.value = fusionId
+            _historyActionMessage.value = null
+
+            try {
+                val response = repository.deleteFusion(fusionId)
+
+                when {
+                    response.isSuccessful && response.body()?.success == true -> {
+                        _historyActionMessage.value =
+                            response.body()?.message ?: "Fusion eliminada correctamente."
+                        loadFusions()
+                    }
+
+                    response.code() == 401 ->
+                        _historyActionMessage.value = "Tu sesion expiro. Inicia sesion nuevamente."
+
+                    else -> {
+                        val apiMessage = response.body()?.error
+                            ?: response.body()?.message
+                            ?: response.errorBody()?.string()
+                            ?: "No se pudo eliminar la fusion."
+                        _historyActionMessage.value = apiMessage
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("Fusion", "Error eliminando fusion $fusionId", e)
+                _historyActionMessage.value = "Error de red. Intenta nuevamente."
+            } finally {
+                _deletingFusionId.value = null
+            }
+        }
+    }
+
+    fun dismissHistoryActionMessage() {
+        _historyActionMessage.value = null
     }
 }
